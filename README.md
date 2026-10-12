@@ -6,6 +6,8 @@ Glass style on any platform. That means the real look, not the 2020 frosted
 blur: content bends at the glass rim, the rim catches light, and the glass
 stays off your content.
 
+**[Live demo](https://xenitv1.github.io/liquid-glass-skill/)**: drag the glass over the text (Chrome or Edge to see it bend).
+
 ![Text bending at the edge of a glass capsule](examples/screenshots/refraction.gif)
 
 **First live example:** <img src="examples/screenshots/spiralens/icon.png" width="20" height="20" alt="" align="top"> [Spiralens: Golden Ratio Camera](https://play.google.com/store/apps/details?id=com.owlapp.spiralens) on Google Play, whose glass was built with this skill. [See it below.](#first-live-example-spiralens)
@@ -33,7 +35,7 @@ stays off your content.
 
 ## Examples
 
-Open the files in `examples/` in Chrome or Edge to see the bend. They use only
+Try them in the [live demo](https://xenitv1.github.io/liquid-glass-skill/), or open the files in `examples/` in Chrome or Edge to see the bend. They use only
 the skill's own files, with no build step.
 
 | | |
