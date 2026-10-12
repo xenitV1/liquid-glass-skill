@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Liquid Glass Parts</title>
+<meta name="description" content="Liquid Glass components for the web, each shown over the kind of content it is meant to float above. Built with the apple-liquid-glass skill.">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="assets/examples.css">
+<script src="../assets/refraction.js" defer></script>
+<style>
+  /* ---------------------------------------------------------------------
+     Page layout (content layer: opaque, no glass)
+     ------------------------------------------------------------------- */
+  .page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 36px 24px 80px;
+  }
+  .intro { max-width: 660px; margin-bottom: 36px; }
+  .intro h1 {
+    margin: 0 0 10px;
+    font-size: var(--t-large-title);
+    line-height: var(--lh-large-title);
+    font-weight: 700;
+    letter-spacing: var(--tr-display);
+  }
+  .intro p {
+    margin: 0;
+    font-size: var(--t-body);
+    line-height: 1.5;
+    color: var(--label-2);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 460px), 1fr));
+    gap: 40px 28px;
+  }
+  figure { margin: 0; }
+  figcaption { padding: 14px 4px 0; }
+  figcaption h2 {
+    margin: 0 0 4px;
+    font-size: var(--t-headline);
+    line-height: var(--lh-headline);
+    font-weight: 600;
+    letter-spacing: var(--tr-body);
+  }
+  figcaption p {
+    margin: 0;
+    font-size: var(--t-subhead);
+    line-height: var(--lh-subhead);
+    color: var(--label-2);
+  }
+  .stage {
+    min-height: 340px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--card-shadow);
+  }
+
+  /* ---------------------------------------------------------------------
+     Shared glass building blocks
+     ------------------------------------------------------------------- */
+  .gbtn {                         /* circular glass control */
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--r-pill);
+    color: var(--label);
+    cursor: pointer;
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+  .gbtn:active, .capsule button:active, .tab:active { transform: scale(0.92); }
+  .capsule {                      /* related actions share one capsule */
+    display: flex;
+    align-items: center;
+    padding: 0 4px;
+    height: 44px;
+    border-radius: var(--r-pill);
+  }
+  .capsule button {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--r-pill);
+    background: none;
+    color: var(--label);
+    cursor: pointer;
+    transition: background var(--dur-normal) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  }
+  .capsule button:hover { background: var(--fill-2); }
+  .capsule button[aria-pressed='true'] { background: var(--fill); }
+  .primary {                      /* the one coloured thing in a bar */
+    height: 44px;
+    padding: 0 18px;
+    border: 0;
+    border-radius: var(--r-pill);
+    background: var(--tint);
+    color: var(--on-tint);
+    font: inherit;
+    font-size: var(--t-subhead);
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.4), 0 6px 18px rgba(0, 0, 0, 0.12);
+    transition: background var(--dur-normal) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  }
+  .primary:hover { background: var(--tint-hover); }
+  .primary:active { transform: scale(0.95); }
+
+  /* ---------------------------------------------------------------------
+     0. Refraction
+     ------------------------------------------------------------------- */
+  .s-refract { padding: 0; background: var(--surface); min-height: 380px; touch-action: none; }
+  .article { padding: 26px 28px; }
+  .article h3 {
+    margin: 0 0 10px;
+    font-size: var(--t-title-1);
+    line-height: var(--lh-title-1);
+    font-weight: 700;
+    letter-spacing: var(--tr-title);
+  }
+  .article p { margin: 0 0 12px; font-size: var(--t-title-3); line-height: 1.45; }
+  .article .strip { height: 64px; margin-top: 6px; border-radius: var(--r-row); background: url('assets/landscape.svg') center 62% / cover; }
+  .lens {
+    position: absolute;
+    z-index: 2;
+    cursor: grab;
+    touch-action: none;
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+  .lens:active { cursor: grabbing; transform: scale(1.04); }
+  .lens:focus-visible { outline: 2.5px solid var(--tint); outline-offset: 3px; }
+  .lens--pill { left: 40px; top: 62px; width: 260px; height: 64px; border-radius: var(--r-pill); }
+  .lens--circle { left: 360px; top: 96px; width: 120px; height: 120px; border-radius: 50%; }
+  .lens--regular { left: 70px; top: 186px; width: 260px; height: 84px; border-radius: 28px;
+    display: grid; place-items: center; font-size: var(--t-subhead); font-weight: 600; }
+  .support-note { margin-top: 6px !important; font-size: var(--t-footnote) !important; }
+
+  /* ---------------------------------------------------------------------
+     1. Toolbar
+     ------------------------------------------------------------------- */
+  .s-toolbar { padding: 0; }
+  .s-toolbar .bar {
+    position: absolute;
+    top: 14px; left: 14px; right: 14px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .title-block { display: flex; flex-direction: column; min-width: 0; padding: 0 6px; line-height: 1.2; }
+  .title-block strong { font-size: var(--t-subhead); font-weight: 600; white-space: nowrap; }
+  .title-block span { font-size: var(--t-caption-1); color: var(--label-2); }
+  /* The title sits on the photo, so it gets its own glass backing */
+  .title-glass { height: 44px; display: flex; align-items: center; padding: 0 12px; border-radius: var(--r-pill); }
+  .note {
+    margin: 50px 22px 0;      /* starts under the bar so the glass has text and photo behind it */
+    padding: 36px 22px 22px;
+    border-radius: var(--r-card) var(--r-card) 0 0;
+    background: var(--surface);
+    box-shadow: var(--card-shadow);
+    flex: 1;
+  }
+  .note h3 { margin: 0 0 6px; font-size: var(--t-title-2); line-height: var(--lh-title-2); font-weight: 700; letter-spacing: var(--tr-title); }
+  .note .meta { margin: 0 0 12px; font-size: var(--t-footnote); color: var(--label-2); }
+  .note p { margin: 0; font-size: var(--t-body); line-height: 1.5; }
+  @container (max-width: 520px) { .hide-narrow { display: none !important; } }
+  .s-toolbar { container-type: inline-size; }
+
+  /* ---------------------------------------------------------------------
+     2. Tab bar
+     ------------------------------------------------------------------- */
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin: -16px -16px 0;
+    padding-bottom: 90px;
+  }
+  .tile { aspect-ratio: 1; }
+  .tile:nth-child(1) { background: linear-gradient(140deg, #FFB86B, #FF5E62); }
+  .tile:nth-child(2) { background: url('assets/landscape.svg') 30% 60% / 300% auto; }
+  .tile:nth-child(3) { background: linear-gradient(160deg, #43E97B, #38F9D7); }
+  .tile:nth-child(4) { background: linear-gradient(200deg, #667EEA, #764BA2); }
+  .tile:nth-child(5) { background: linear-gradient(120deg, #F6D365, #FDA085); }
+  .tile:nth-child(6) { background: url('assets/landscape.svg') 80% 30% / 260% auto; }
+  .tabbar-wrap {
+    position: absolute;
+    left: 16px; right: 16px; bottom: 16px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+  .tabbar {
+    display: flex;
+    padding: 4px;
+    border-radius: var(--r-pill);
+  }
+  .tab {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 66px;
+    height: 54px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: var(--r-pill);
+    background: none;
+    color: var(--label);
+    font: inherit;
+    font-size: var(--t-caption-2);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--dur-normal) var(--ease-spring), color var(--dur-normal) var(--ease-out),
+                transform var(--dur-fast) var(--ease-out);
+  }
+  /* Selected tab: icon and label take the tint; the bar stays neutral */
+  .tab[aria-current] { color: var(--tint); background: var(--fill); }
+  .badge {
+    position: absolute;
+    top: 4px; left: calc(50% + 6px);
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: var(--r-pill);
+    background: var(--sys-red);
+    color: #fff;
+    font-size: var(--t-caption-2);
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+  }
+  .search-cap { width: 62px; height: 62px; }
+  @media (max-width: 420px) { .tab { min-width: 56px; padding: 0 4px; } }
+
+  /* ---------------------------------------------------------------------
+     3. Controls over dark content
+     ------------------------------------------------------------------- */
+  .s-controls { justify-content: center; gap: 12px; }
+  .cc {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: min(100%, 380px);
+    margin: 0 auto;
+  }
+  .module { border-radius: 28px; padding: 12px; }
+  .toggles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; justify-items: center; align-content: center; }
+  .toggle {
+    display: grid;
+    place-items: center;
+    width: 54px;
+    height: 54px;
+    border: 0;
+    border-radius: var(--r-pill);
+    background: var(--fill);
+    color: var(--label);
+    cursor: pointer;
+    transition: background var(--dur-normal) var(--ease-out), color var(--dur-normal) var(--ease-out),
+                transform var(--dur-fast) var(--ease-out);
+  }
+  .toggle:active { transform: scale(0.92); }
+  .toggle[aria-pressed='true'] { background: var(--sys-blue); color: #fff; }
+  .toggle--orange[aria-pressed='true'] { background: var(--sys-orange); color: #1D1D1F; }
+  .now { display: flex; flex-direction: column; justify-content: space-between; }
+  .now .art { width: 48px; height: 48px; border-radius: 10px; background: linear-gradient(140deg, #FF9A8B, #FF6A88 55%, #FF99AC); }
+  .now strong { display: block; margin-top: 8px; font-size: var(--t-footnote); font-weight: 600; }
+  .now span { font-size: var(--t-caption-1); color: var(--label-2); }
+  .now .row { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+  .now .row button { display: grid; place-items: center; width: 44px; height: 44px; margin: -4px; border: 0; background: none; color: var(--label); cursor: pointer; border-radius: var(--r-pill); }
+  .now .row button:active { transform: scale(0.9); }
+  .slider {
+    --v: 50;
+    position: relative;
+    grid-column: span 2;
+    display: flex;
+    align-items: center;
+    height: 56px;
+    padding: 0 18px;
+    border-radius: var(--r-pill);
+    overflow: hidden;
+    color: var(--label);
+  }
+  .slider .fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: calc(var(--v) * 1%);
+    background: rgba(255, 255, 255, 0.9);
+    pointer-events: none;
+  }
+  .slider .i { position: relative; z-index: 1; mix-blend-mode: difference; color: #fff; }
+  .slider input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .slider:focus-within { outline: 2.5px solid var(--tint); outline-offset: 2px; }
+
+  /* ---------------------------------------------------------------------
+     4. Regular vs clear
+     ------------------------------------------------------------------- */
+  .s-material { justify-content: flex-start; gap: 14px; padding-top: 26px; }
+  .variant { display: flex; align-items: center; gap: 2px; height: 52px; padding: 0 8px 0 18px; border-radius: var(--r-pill); width: fit-content; }
+  .variant b { margin-right: 10px; font-size: var(--t-subhead); font-weight: 600; white-space: nowrap; }
+  .variant button { display: grid; place-items: center; width: 44px; height: 44px; border: 0; background: none; color: inherit; border-radius: var(--r-pill); cursor: pointer; }
+  .variant button:active { transform: scale(0.9); }
+  .variant.glass-clear { color: #fff; }
+  .variant.glass-clear b { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25); }
+  .verdict { display: inline-flex; align-items: center; gap: 6px; margin-left: 10px; font-size: var(--t-caption-1); font-weight: 600; }
+  .variant--wrong { outline: 2px dashed rgba(255, 56, 60, 0.9); outline-offset: 3px; }
+  /* the clear chips also get the rim and sheen of .glass */
+  .glass-clear.glass { background-color: rgba(255, 255, 255, 0.18); }
+
+  /* ---------------------------------------------------------------------
+     5. Popover
+     ------------------------------------------------------------------- */
+  .s-popover { padding: 14px; }
+  .s-popover .bar { display: flex; justify-content: flex-end; gap: 8px; }
+  .gbtn[aria-expanded='true'] { background: var(--glass-thick); }
+  .popover {
+    position: relative;
+    align-self: flex-end;
+    width: min(100%, 300px);
+    margin-top: 14px;
+    padding: 8px;
+    border-radius: 26px;
+    display: grid;
+    gap: 8px;
+  }
+  /* pointer aimed at the control that opened it (a child element: the
+     glass ::before is the rim) */
+  .pointer {
+    position: absolute;
+    top: -9px;
+    right: 64px;               /* centre of the Aa button: 44 + 8 gap + 22 - 10 */
+    width: 20px;
+    height: 10px;
+    background: inherit;
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    clip-path: polygon(50% 0, 100% 100%, 0 100%);
+  }
+  :root[data-rt] .pointer { background: var(--glass-thick); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .group { background: var(--surface); border-radius: 18px; padding: 4px 14px; }
+  .group-row {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 44px;
+    font-size: var(--t-subhead);
+  }
+  .group-row + .group-row::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 0.5px;
+    background: var(--separator);
+  }
+  .stepper { display: flex; align-items: center; gap: 4px; }
+  .stepper button {
+    display: grid; place-items: center;
+    width: 36px; height: 32px;
+    border: 0; border-radius: var(--r-pill);
+    background: var(--fill); color: var(--label);
+    cursor: pointer;
+  }
+  .stepper button:active { transform: scale(0.9); background: var(--fill-2); }
+  .stepper output { min-width: 46px; text-align: center; font-weight: 600; }
+  .group .segmented { margin: 6px 0; }
+  .group .segmented button { flex: 1; min-height: 32px; }
+  .switch {
+    position: relative;
+    width: 51px; height: 31px;
+    flex: none;
+    border: 0;
+    border-radius: var(--r-pill);
+    background: var(--fill);
+    cursor: pointer;
+    transition: background var(--dur-normal) var(--ease-out);
+  }
+  .switch::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 27px; height: 27px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 1px 1px rgba(0, 0, 0, 0.16);
+    transition: transform var(--dur-slow) var(--ease-spring);
+  }
+  .switch[aria-checked='true'] { background: var(--sys-green); }
+  .switch[aria-checked='true']::after { transform: translateX(20px); }
+  .switch:active::after { width: 32px; }
+  .switch[aria-checked='true']:active::after { transform: translateX(15px); }
+
+  /* ---------------------------------------------------------------------
+     6. Menu
+     ------------------------------------------------------------------- */
+  .s-menu { padding: 14px; }
+  .s-menu .bar { display: flex; justify-content: flex-end; }
+  .menu {
+    align-self: flex-end;
+    width: min(100%, 260px);
+    margin-top: 10px;
+    padding: 6px;
+    border-radius: 24px;
+    list-style: none;
+  }
+  .menu-group { margin: 0; padding: 0; list-style: none; }
+  .menu-group + .menu-group { margin-top: 6px; padding-top: 6px; border-top: 0.5px solid var(--separator); }
+  .menu button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 14px;
+    background: none;
+    color: var(--label);
+    font: inherit;
+    font-size: var(--t-body);
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease-out);
+  }
+  .menu button:hover, .menu button:focus-visible { background: var(--fill); outline: none; }
+  .menu button:active { background: var(--fill); transform: scale(0.98); }
+  .menu .destructive { color: var(--sys-red); }
+  :root:not([data-theme='dark']) .menu .destructive { color: #D70015; }   /* red text needs 4.5:1 on light glass */
+  @media (prefers-color-scheme: dark) { :root:not([data-theme='light']) .menu .destructive { color: var(--sys-red); } }
+
+  /* ---------------------------------------------------------------------
+     7. Sheet
+     ------------------------------------------------------------------- */
+  .s-sheet { padding: 0; justify-content: flex-end; }
+  .s-sheet .tiles { margin: 0; padding: 0; position: absolute; inset: 0; grid-template-columns: repeat(4, 1fr); }
+  .s-sheet .scrim { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.18); }
+  .sheet {
+    position: relative;
+    margin: 0 8px 8px;
+    padding: 8px 16px 18px;
+    border-radius: 34px;
+  }
+  .grabber { width: 36px; height: 5px; margin: 0 auto 6px; border-radius: 3px; background: var(--label-3); opacity: 0.6; }
+  .sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+  .sheet-head h3 { margin: 0; font-size: var(--t-headline); font-weight: 600; }
+  .sheet .gbtn { background: var(--fill); }
+  .sheet .gbtn.confirm { background: var(--tint); color: var(--on-tint); }
+  .field {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: 14px;
+    background: var(--surface);
+    color: var(--label);
+    font: inherit;
+    font-size: var(--t-body);
+  }
+  .field::placeholder { color: var(--label-2); }
+  .swatches { display: flex; justify-content: space-between; gap: 6px; margin-top: 10px; padding: 10px 12px; border-radius: 14px; background: var(--surface); }
+  .swatches button {
+    width: 32px; height: 32px;
+    border: 0; border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+  }
+  .swatches button::before { content: ''; position: absolute; inset: -6px; }
+  .swatches button[aria-selected='true'] { box-shadow: 0 0 0 2.5px var(--surface), 0 0 0 4.5px var(--label-2); }
+  .swatches button:active { transform: scale(0.9); }
+
+  footer { margin-top: 56px; font-size: var(--t-footnote); color: var(--label-2); }
+  footer a { color: var(--tint); }
+</style>
+</head>
+<body>
+<script src="assets/examples.js"></script>
+
+<header class="toolbar page-bar glass" data-refract>
+  <div class="brand">
+    <strong>Liquid Glass</strong>
+    <span>Examples</span>
+  </div>
+  <nav aria-label="Examples">
+    <a href="glass-components.html" aria-current="page">Parts</a>
+    <a href="mac-app-window.html">macOS window</a>
+    <a href="ios-screens.html">iOS screens</a>
+  </nav>
+  <div class="spacer"></div>
+  <div class="segmented" role="tablist" aria-label="Appearance" data-select-group="selected">
+    <button role="tab" data-set-theme="auto" aria-selected="true">Auto</button>
+    <button role="tab" data-set-theme="light" aria-selected="false">Light</button>
+    <button role="tab" data-set-theme="dark" aria-selected="false">Dark</button>
+  </div>
+  <button class="icon-btn" data-toggle-rt aria-pressed="false" title="Preview Reduce Transparency" aria-label="Preview Reduce Transparency">
+    <svg class="i"><use href="#i-transparency"/></svg>
+  </button>
+</header>
+<div class="scroll-edge"></div>
+
+<main class="page">
+  <section class="intro">
+    <h1>Liquid Glass, in parts</h1>
+    <p>Each control sits on the kind of content it is meant to float over. The glass is always on the controls,
+      never on the content: notes, photos and lists stay solid. Switch the appearance or turn on Reduce
+      Transparency in the bar above to see the fallbacks.</p>
+  </section>
+
+  <div class="grid">
+
+    <!-- 0. Refraction -->
+    <figure>
+      <div class="scene stage s-refract" id="refract-stage">
+        <article class="article" aria-hidden="true">
+          <h3>Glass that bends</h3>
+          <p>Drag the glass over these lines. Letters near the rim curve and stretch, as through the thick
+            edge of a lens, while the middle stays clear and easy to read.</p>
+          <div class="strip"></div>
+        </article>
+        <div class="lens lens--pill glass glass-clear" data-refract tabindex="0" role="img" aria-label="Clear glass capsule, draggable"></div>
+        <div class="lens lens--circle glass glass-clear" data-refract tabindex="0" role="img" aria-label="Clear glass circle, draggable"></div>
+        <div class="lens lens--regular glass" data-refract tabindex="0" role="img" aria-label="Regular glass panel, draggable">Regular</div>
+      </div>
+      <figcaption>
+        <h2>Refraction</h2>
+        <p>Content under the glass bends along its outline, which plain blur cannot do. Clear glass shows it on
+          text; regular glass shows it in the blurred colours.</p>
+        <p class="support-note" id="refract-support"></p>
+      </figcaption>
+    </figure>
+
+    <!-- 1. Toolbar -->
+    <figure>
+      <div class="scene scene--landscape stage s-toolbar">
+        <div class="bar">
+          <button class="gbtn glass" aria-label="Back" data-refract><svg class="i"><use href="#i-chevron-left"/></svg></button>
+          <div class="title-glass glass" data-refract>
+            <div class="title-block"><strong>Trip notes</strong><span>12 notes</span></div>
+          </div>
+          <div class="spacer"></div>
+          <div class="capsule glass hide-narrow" role="group" aria-label="Formatting" data-refract>
+            <button aria-label="Bold" data-toggle aria-pressed="true"><svg class="i"><use href="#i-bold"/></svg></button>
+            <button aria-label="Italic" data-toggle aria-pressed="false"><svg class="i"><use href="#i-italic"/></svg></button>
+            <button aria-label="List" data-toggle aria-pressed="false"><svg class="i"><use href="#i-list"/></svg></button>
+          </div>
+          <button class="gbtn glass" aria-label="Share" data-refract><svg class="i"><use href="#i-share"/></svg></button>
+          <button class="primary">Publish</button>
+        </div>
+        <article class="note">
+          <h3>Lisbon, day three</h3>
+          <p class="meta">Edited today at 09:41</p>
+          <p>Took the 28 tram up to Graça before the crowds. Coffee at the kiosk by the viewpoint, then down
+            through Alfama on foot.</p>
+        </article>
+      </div>
+      <figcaption>
+        <h2>Toolbar</h2>
+        <p>Circular chips, related actions grouped into one capsule, and a single tinted action. The note card
+          is solid; only the bar is glass.</p>
+      </figcaption>
+    </figure>
+
+    <!-- 2. Tab bar -->
+    <figure>
+      <div class="scene scene--ocean stage">
+        <div class="tiles" aria-hidden="true">
+          <div class="tile"></div><div class="tile"></div><div class="tile"></div>
+          <div class="tile"></div><div class="tile"></div><div class="tile"></div>
+        </div>
+        <div class="tabbar-wrap">
+          <nav class="tabbar glass" aria-label="Sections" data-select-group="current" data-refract>
+            <button class="tab"><svg class="i i--lg"><use href="#i-house"/></svg>Home</button>
+            <button class="tab" aria-current="page"><svg class="i i--lg"><use href="#i-photo"/></svg>Photos</button>
+            <button class="tab"><svg class="i i--lg"><use href="#i-people"/></svg>Shared<span class="badge" aria-label="3 new">3</span></button>
+            <button class="tab"><svg class="i i--lg"><use href="#i-person"/></svg>Profile</button>
+          </nav>
+          <button class="gbtn glass search-cap" aria-label="Search" data-refract><svg class="i i--lg"><use href="#i-search"/></svg></button>
+        </div>
+      </div>
+      <figcaption>
+        <h2>Tab bar</h2>
+        <p>A floating capsule. Only the selected tab is tinted, on its icon and label. Search gets its own
+          smaller capsule beside the group.</p>
+      </figcaption>
+    </figure>
+
+    <!-- 3. Controls on dark content -->
+    <figure>
+      <div class="scene scene--aurora stage s-controls" data-tone="dark">
+        <div class="cc">
+          <div class="module glass toggles" data-refract>
+            <button class="toggle" data-toggle aria-pressed="true" aria-label="Wi-Fi"><svg class="i i--lg"><use href="#i-wifi"/></svg></button>
+            <button class="toggle" data-toggle aria-pressed="true" aria-label="Bluetooth"><svg class="i i--lg"><use href="#i-bluetooth"/></svg></button>
+            <button class="toggle toggle--orange" data-toggle aria-pressed="false" aria-label="Airplane mode"><svg class="i i--lg"><use href="#i-airplane"/></svg></button>
+            <button class="toggle" data-toggle aria-pressed="false" aria-label="Focus"><svg class="i i--lg"><use href="#i-moon"/></svg></button>
+          </div>
+          <div class="module glass now" data-refract>
+            <div class="art" aria-hidden="true"></div>
+            <div><strong>Slow Tide</strong><span>Harbour Lights</span></div>
+            <div class="row">
+              <button aria-label="Previous"><svg class="i"><use href="#i-backward"/></svg></button>
+              <button aria-label="Pause" data-toggle aria-pressed="false"><svg class="i i--lg"><use href="#i-pause"/></svg></button>
+              <button aria-label="Next"><svg class="i"><use href="#i-forward"/></svg></button>
+            </div>
+          </div>
+          <label class="slider glass" data-refract>
+            <span class="fill"></span>
+            <svg class="i i--lg"><use href="#i-sun"/></svg>
+            <span class="visually-hidden">Brightness</span>
+            <input type="range" min="0" max="100" value="62">
+          </label>
+          <label class="slider glass" data-refract>
+            <span class="fill"></span>
+            <svg class="i i--lg"><use href="#i-speaker"/></svg>
+            <span class="visually-hidden">Volume</span>
+            <input type="range" min="0" max="100" value="38">
+          </label>
+        </div>
+      </div>
+      <figcaption>
+        <h2>Controls over dark content</h2>
+        <p>Glass turns dark over dark content and light over light content. Here the scene sets darker glass
+          tokens, so the same components adapt without extra styles.</p>
+      </figcaption>
+    </figure>
+
+    <!-- 4. Regular vs clear -->
+    <figure>
+      <div class="scene scene--landscape stage s-material">
+        <div class="variant glass" data-refract>
+          <b>Regular</b>
+          <button aria-label="Previous"><svg class="i"><use href="#i-backward"/></svg></button>
+          <button aria-label="Play"><svg class="i i--lg"><use href="#i-play"/></svg></button>
+          <button aria-label="Next"><svg class="i"><use href="#i-forward"/></svg></button>
+        </div>
+        <div class="variant glass glass-clear glass-dim" data-refract>
+          <b>Clear + 35% dim</b>
+          <button aria-label="Previous"><svg class="i"><use href="#i-backward"/></svg></button>
+          <button aria-label="Play"><svg class="i i--lg"><use href="#i-play"/></svg></button>
+          <button aria-label="Next"><svg class="i"><use href="#i-forward"/></svg></button>
+        </div>
+        <div class="variant glass glass-clear variant--wrong" data-refract>
+          <b>Clear, no dim</b>
+          <button aria-label="Previous"><svg class="i"><use href="#i-backward"/></svg></button>
+          <button aria-label="Play"><svg class="i i--lg"><use href="#i-play"/></svg></button>
+          <button aria-label="Next"><svg class="i"><use href="#i-forward"/></svg></button>
+        </div>
+      </div>
+      <figcaption>
+        <h2>Regular or clear</h2>
+        <p>Regular is the default and almost opaque. Clear is only for controls over photos and video, and
+          over a bright image it needs a 35% dark layer. The dashed one skips it, and its label gets lost.</p>
+      </figcaption>
+    </figure>
+
+    <!-- 5. Popover -->
+    <figure>
+      <div class="scene scene--citrus stage s-popover">
+        <div class="bar">
+          <button class="gbtn glass" aria-label="Text options" aria-expanded="true" aria-controls="pop1" data-refract><svg class="i"><use href="#i-textformat"/></svg></button>
+          <button class="gbtn glass" aria-label="More" data-refract><svg class="i"><use href="#i-ellipsis"/></svg></button>
+        </div>
+        <div class="popover glass glass-text" id="pop1" role="dialog" aria-label="Text options" data-refract>
+          <span class="pointer" aria-hidden="true"></span>
+          <div class="group">
+            <div class="segmented" role="tablist" aria-label="Font" data-select-group="selected">
+              <button role="tab" aria-selected="true">Default</button>
+              <button role="tab" aria-selected="false">Serif</button>
+              <button role="tab" aria-selected="false">Mono</button>
+            </div>
+          </div>
+          <div class="group">
+            <div class="group-row">
+              <span>Text size</span>
+              <div class="stepper">
+                <button aria-label="Smaller"><svg class="i i--sm"><use href="#i-minus"/></svg></button>
+                <output class="tnum">17 pt</output>
+                <button aria-label="Larger"><svg class="i i--sm"><use href="#i-plus"/></svg></button>
+              </div>
+            </div>
+          </div>
+          <div class="group">
+            <div class="group-row"><span id="l1">Line numbers</span><button class="switch" role="switch" aria-checked="true" aria-labelledby="l1"></button></div>
+            <div class="group-row"><span id="l2">Wrap long lines</span><button class="switch" role="switch" aria-checked="false" aria-labelledby="l2"></button></div>
+          </div>
+        </div>
+      </div>
+      <figcaption>
+        <h2>Popover</h2>
+        <p>One glass container with solid groups inside, and a pointer aimed at the button that opened it.
+          Only one at a time.</p>
+      </figcaption>
+    </figure>
+
+    <!-- 6. Menu -->
+    <figure>
+      <div class="scene scene--ocean stage s-menu">
+        <div class="bar">
+          <button class="gbtn glass" aria-label="Actions" aria-haspopup="menu" aria-expanded="true" data-refract><svg class="i"><use href="#i-ellipsis"/></svg></button>
+        </div>
+        <div class="menu glass glass-text" role="menu" aria-label="Actions" data-refract>
+          <ul class="menu-group" role="none">
+            <li role="none"><button role="menuitem">Copy <svg class="i"><use href="#i-copy"/></svg></button></li>
+            <li role="none"><button role="menuitem">Favorite <svg class="i"><use href="#i-star"/></svg></button></li>
+            <li role="none"><button role="menuitem">Share… <svg class="i"><use href="#i-share"/></svg></button></li>
+          </ul>
+          <ul class="menu-group" role="none">
+            <li role="none"><button role="menuitem">Rename <svg class="i"><use href="#i-pencil"/></svg></button></li>
+            <li role="none"><button role="menuitem">Move to Folder… <svg class="i"><use href="#i-folder"/></svg></button></li>
+          </ul>
+          <ul class="menu-group" role="none">
+            <li role="none"><button role="menuitem" class="destructive">Delete <svg class="i"><use href="#i-trash"/></svg></button></li>
+          </ul>
+        </div>
+      </div>
+      <figcaption>
+        <h2>Menu</h2>
+        <p>Every item in a group has an icon, or none do. Verbs in title case, an ellipsis when more input
+          follows, and Delete on its own in red.</p>
+      </figcaption>
+    </figure>
+
+    <!-- 7. Sheet -->
+    <figure>
+      <div class="scene scene--citrus stage s-sheet">
+        <div class="tiles" aria-hidden="true">
+          <div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div>
+          <div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div>
+        </div>
+        <div class="scrim"></div>
+        <div class="sheet glass glass-text" role="dialog" aria-labelledby="sh1" data-refract>
+          <div class="grabber" aria-hidden="true"></div>
+          <div class="sheet-head">
+            <button class="gbtn" aria-label="Cancel"><svg class="i"><use href="#i-xmark"/></svg></button>
+            <h3 id="sh1">New album</h3>
+            <button class="gbtn confirm" aria-label="Done"><svg class="i"><use href="#i-check"/></svg></button>
+          </div>
+          <label class="visually-hidden" for="album">Album name</label>
+          <input class="field" id="album" placeholder="Album name" value="Summer 2026">
+          <div class="swatches" role="tablist" aria-label="Colour" data-select-group="selected">
+            <button role="tab" aria-selected="true" aria-label="Blue" style="background:var(--sys-blue)"></button>
+            <button role="tab" aria-selected="false" aria-label="Green" style="background:var(--sys-green)"></button>
+            <button role="tab" aria-selected="false" aria-label="Orange" style="background:var(--sys-orange)"></button>
+            <button role="tab" aria-selected="false" aria-label="Pink" style="background:var(--sys-pink)"></button>
+            <button role="tab" aria-selected="false" aria-label="Purple" style="background:var(--sys-purple)"></button>
+            <button role="tab" aria-selected="false" aria-label="Teal" style="background:var(--sys-teal)"></button>
+          </div>
+        </div>
+      </div>
+      <figcaption>
+        <h2>Sheet</h2>
+        <p>A glass sheet at medium height, with a grabber, a close button and a tinted confirm button. The
+          fields inside it are solid.</p>
+      </figcaption>
+    </figure>
+
+  </div>
+
+  <footer>
+    Built with the <code>apple-liquid-glass</code> skill and its <code>assets/tokens.css</code>. Icons are simple
+    stand-ins; SF Symbols are not licensed for web use.
+  </footer>
+</main>
+<script>
+  /* drag the lenses with mouse, touch or arrow keys */
+  (function () {
+    var stage = document.getElementById('refract-stage');
+    stage.querySelectorAll('.lens').forEach(function (lens) {
+      var start = null;
+      lens.addEventListener('pointerdown', function (e) {
+        lens.setPointerCapture(e.pointerId);
+        start = { x: e.clientX, y: e.clientY, left: lens.offsetLeft, top: lens.offsetTop };
+      });
+      lens.addEventListener('pointermove', function (e) {
+        if (!start) return;
+        move(start.left + e.clientX - start.x, start.top + e.clientY - start.y);
+      });
+      lens.addEventListener('pointerup', function () { start = null; });
+      lens.addEventListener('keydown', function (e) {
+        var d = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] }[e.key];
+        if (!d) return;
+        e.preventDefault();
+        move(lens.offsetLeft + d[0], lens.offsetTop + d[1]);
+      });
+      function move(x, y) {
+        x = Math.max(-lens.offsetWidth / 2, Math.min(stage.clientWidth - lens.offsetWidth / 2, x));
+        y = Math.max(-lens.offsetHeight / 2, Math.min(stage.clientHeight - lens.offsetHeight / 2, y));
+        lens.style.left = x + 'px';
+        lens.style.top = y + 'px';
+      }
+    });
+    function note() {
+      var lg = window.LiquidGlassRefraction;
+      var text = !lg || !lg.supported()
+        ? 'This browser does not support bending yet (Safari and Firefox), so you see the plain blur glass. Open the page in Chrome or Edge to see it bend.'
+        : document.documentElement.hasAttribute('data-rt')
+          ? 'Reduce Transparency is on, so the glass is solid and nothing bends.'
+          : 'Bending is on in this browser.';
+      document.getElementById('refract-support').textContent = text;
+    }
+    window.addEventListener('load', note);
+    document.addEventListener('click', function (e) { if (e.target.closest('[data-toggle-rt]')) note(); });
+  })();
+</script>
+</body>
+</html>

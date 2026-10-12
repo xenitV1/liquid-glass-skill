@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>macOS Journal Window</title>
+<meta name="description" content="A macOS 26 style app window in HTML and CSS: floating glass sidebar with background extension, glass toolbar over a hero image, solid content. Built with the apple-liquid-glass skill.">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="assets/examples.css">
+<script src="../assets/refraction.js" defer></script>
+<style>
+  body { min-height: 100vh; }
+  body::before { display: none; }          /* the desktop wallpaper replaces the ambient ground */
+
+  /* ---------------------------------------------------------------------
+     Desktop and window frame
+     ------------------------------------------------------------------- */
+  .desktop {
+    min-height: 100vh;
+    padding: 56px 32px;
+    box-sizing: border-box;
+    border-radius: 0;
+    display: grid;
+    place-items: center;
+  }
+  .window {
+    --side-w: 236px;
+    position: relative;
+    isolation: isolate;
+    width: min(100%, 1120px);
+    height: min(760px, calc(100vh - 112px));
+    min-height: 560px;
+    border-radius: 26px;
+    overflow: hidden;
+    background: var(--ground);                 /* the window body is solid */
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.25), 0 30px 80px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.18);
+  }
+
+  /* ---------------------------------------------------------------------
+     Background extension: the hero, flipped and blurred, carried under the
+     sidebar so the sidebar glass refracts the content's own colours.
+     ------------------------------------------------------------------- */
+  .extend {
+    position: absolute;
+    top: 0; left: 0;
+    width: calc(var(--side-w) + 24px);
+    height: 300px;
+    overflow: hidden;
+    z-index: 0;
+  }
+  .extend img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: left center;
+    transform: scaleX(-1) scale(1.2);
+    filter: blur(28px) saturate(140%);
+  }
+  .extend::after {                           /* fade into the window body */
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 40%, var(--ground));
+  }
+
+  /* ---------------------------------------------------------------------
+     Floating glass sidebar
+     ------------------------------------------------------------------- */
+  .sidebar {
+    position: absolute;
+    top: 8px; left: 8px; bottom: 8px;
+    z-index: 3;
+    width: var(--side-w);
+    box-sizing: border-box;
+    padding: 14px 10px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    overflow: auto;
+    transition: transform var(--dur-slow) var(--ease-out), opacity var(--dur-slow) var(--ease-out);
+  }
+  .lights { display: flex; gap: 8px; padding: 2px 6px 6px; }
+  .lights span { width: 12px; height: 12px; border-radius: 50%; box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.15); }
+  .lights span:nth-child(1) { background: #FF5F57; }
+  .lights span:nth-child(2) { background: #FEBC2E; }
+  .lights span:nth-child(3) { background: #28C840; }
+  .side-nav { display: flex; flex-direction: column; gap: 2px; }
+  .side-nav button {
+    width: 100%;
+    min-height: 32px;
+    border: 0;
+    background: none;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+  .side-row { font-size: var(--t-subhead); padding: 7px 10px; }
+  .side-row:active { transform: scale(0.98); }
+  .side-row .count { margin-left: auto; font-size: var(--t-footnote); color: var(--label-2); }
+  .side-row[aria-current] .count { color: inherit; opacity: 0.85; }
+  .side-row svg.fixed-orange { color: var(--sys-orange); }   /* fixed colour that carries meaning */
+  .side-row[aria-current] svg.fixed-orange { color: currentColor; }
+  .section-title { padding-top: 2px; }
+
+  /* collapsed sidebar */
+  .window.no-side .sidebar { transform: translateX(calc(-100% - 16px)); opacity: 0; pointer-events: none; }
+  .window.no-side .content { padding-left: 0; }
+  .window.no-side .extend { opacity: 0; }
+
+  /* ---------------------------------------------------------------------
+     Content (solid) with a glass toolbar floating over it
+     ------------------------------------------------------------------- */
+  .content {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: auto;
+    padding-left: calc(var(--side-w) + 16px);
+    transition: padding var(--dur-slow) var(--ease-out);
+    scrollbar-width: thin;
+  }
+  .toolbar {
+    margin: 8px 8px -60px;                     /* floats over the hero instead of pushing it down */
+    border-radius: var(--r-pill);
+    border-bottom: 0;
+    gap: 10px;
+    padding: 0 8px 0 10px;
+  }
+  .toolbar + .scroll-edge { top: 60px; }
+  .title-block { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; margin-left: 4px; }
+  .title-block strong { font-size: var(--t-subhead); font-weight: 600; white-space: nowrap; }
+  .title-block span { font-size: var(--t-caption-1); color: var(--label-2); white-space: nowrap; }
+  .spacer { flex: 1; }
+  .icon-btn { position: relative; color: var(--label); }
+  .icon-btn::before { content: ''; position: absolute; inset: -6px; }
+  .group-cap { display: flex; padding: 2px; border-radius: var(--r-pill); background: var(--fill-2); }
+  .group-cap .icon-btn[aria-pressed='true'] { background: var(--surface); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+  .search {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 200px;
+    height: 32px;
+    padding: 0 12px;
+    box-sizing: border-box;
+    border-radius: var(--r-pill);
+    background: var(--fill);
+    color: var(--label-2);
+  }
+  .search input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: none;
+    color: var(--label);
+    font: inherit;
+    font-size: var(--t-footnote);
+    outline: none;
+  }
+  .search input::placeholder { color: var(--label-2); }
+  .search:focus-within { box-shadow: 0 0 0 2.5px var(--tint); }
+  .primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 14px 0 10px;
+    border: 0;
+    border-radius: var(--r-pill);
+    background: var(--tint);
+    color: var(--on-tint);
+    font: inherit;
+    font-size: var(--t-footnote);
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background var(--dur-normal) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+  }
+  .primary:hover { background: var(--tint-hover); }
+  .primary:active { transform: scale(0.95); }
+
+  .hero {
+    display: block;
+    width: calc(100% + var(--side-w) + 16px);
+    margin-left: calc(-1 * (var(--side-w) + 16px));
+    height: 300px;
+    object-fit: cover;
+  }
+  .window.no-side .hero { width: 100%; margin-left: 0; }
+  .body { padding: 22px 28px 40px; }
+  .eyebrow { margin: 0; font-size: var(--t-footnote); font-weight: 600; color: var(--label-2); }
+  h1 {
+    margin: 2px 0 6px;
+    font-size: var(--t-title-1);
+    line-height: var(--lh-title-1);
+    font-weight: 700;
+    letter-spacing: var(--tr-title);
+  }
+  .lede { margin: 0 0 26px; max-width: 620px; font-size: var(--t-body); line-height: 1.5; color: var(--label-2); }
+  h2 {
+    margin: 0 0 10px;
+    padding-left: 4px;
+    font-size: var(--t-title-3);
+    line-height: var(--lh-title-3);
+    font-weight: 600;
+    letter-spacing: var(--tr-title);
+  }
+  .list-group { margin-bottom: 30px; }
+  .list-row { cursor: pointer; }
+  .list-row:active { background: var(--fill); }
+  .thumb { width: 60px; height: 60px; flex: none; border-radius: var(--r-row); background-size: cover; }
+  .row-text { flex: 1; min-width: 0; }
+  .row-text strong { display: block; font-size: var(--t-subhead); font-weight: 600; }
+  .row-text span {
+    display: block;
+    overflow: hidden;
+    font-size: var(--t-footnote);
+    color: var(--label-2);
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  .row-date { flex: none; font-size: var(--t-footnote); color: var(--label-2); }
+  .chev { color: var(--label-3); }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 16px; }
+  .card {
+    overflow: hidden;
+    border-radius: var(--r-card);
+    background: var(--surface);
+    box-shadow: var(--card-shadow);
+    transition: box-shadow var(--dur-normal) var(--ease-out), transform var(--dur-normal) var(--ease-out);
+    cursor: pointer;
+  }
+  .card:hover { box-shadow: var(--card-shadow-h); transform: translateY(-2px); }
+  .card:active { transform: scale(0.98); }
+  .card .img { height: 112px; background-size: cover; background-position: center; }
+  .card div:last-child { padding: 10px 14px 14px; }
+  .card strong { display: block; font-size: var(--t-subhead); font-weight: 600; }
+  .card span { font-size: var(--t-footnote); color: var(--label-2); }
+
+  .g1 { background-image: linear-gradient(140deg, #FFB86B, #FF5E62); }
+  .g2 { background-image: url('assets/landscape.svg'); background-position: 60% 60%; }
+  .g3 { background-image: linear-gradient(160deg, #43E97B, #38F9D7); }
+  .g4 { background-image: linear-gradient(200deg, #667EEA, #764BA2); }
+  .g5 { background-image: linear-gradient(120deg, #F6D365, #FDA085); }
+
+  .back-link {
+    position: fixed;
+    left: 16px; top: 12px;
+    z-index: 10;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 36px;
+    padding: 0 14px 0 8px;
+    border-radius: var(--r-pill);
+    color: var(--label);
+    font-size: var(--t-footnote);
+    font-weight: 500;
+    text-decoration: none;
+  }
+  .back-link:active { transform: scale(0.96); }
+
+  /* ---------------------------------------------------------------------
+     Narrow screens: sidebar starts hidden, toolbar drops the search field
+     ------------------------------------------------------------------- */
+  @media (max-width: 860px) {
+    .desktop { padding: 60px 10px 16px; }
+    .window { --side-w: 220px; height: calc(100vh - 76px); border-radius: 22px; }
+    .search { display: none; }
+  }
+  @media (max-width: 560px) {
+    .toolbar .group-cap, .primary .label { display: none; }
+    .primary { padding: 0 9px; }
+    .body { padding: 18px 16px 32px; }
+    .row-date { display: none; }
+  }
+</style>
+</head>
+<body>
+<script src="assets/examples.js"></script>
+
+<a class="back-link glass" data-refract href="glass-components.html"><svg class="i i--sm"><use href="#i-chevron-left"/></svg>All examples</a>
+
+<div class="desktop scene scene--aurora">
+  <div class="window" id="win">
+    <div class="extend" aria-hidden="true"><img src="assets/landscape.svg" alt=""></div>
+
+    <aside class="sidebar glass glass-text" data-refract aria-label="Sidebar">
+      <div class="lights" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div>
+        <div class="section-title">Library</div>
+        <nav class="side-nav" data-select-group="current">
+          <button class="side-row" aria-current="page"><svg class="i"><use href="#i-clock"/></svg>Recents<span class="count tnum">48</span></button>
+          <button class="side-row"><svg class="i"><use href="#i-star"/></svg>Favorites<span class="count tnum">9</span></button>
+          <button class="side-row"><svg class="i"><use href="#i-people"/></svg>Shared<span class="count tnum">5</span></button>
+          <button class="side-row"><svg class="i"><use href="#i-pin"/></svg>Places<span class="count tnum">17</span></button>
+        </nav>
+      </div>
+      <div>
+        <div class="section-title">Collections</div>
+        <nav class="side-nav" data-select-group="current">
+          <button class="side-row"><svg class="i"><use href="#i-calendar"/></svg>Trips</button>
+          <button class="side-row"><svg class="i"><use href="#i-fork"/></svg>Recipes</button>
+          <button class="side-row"><svg class="i fixed-orange"><use href="#i-bulb"/></svg>Ideas</button>
+          <button class="side-row"><svg class="i"><use href="#i-doc"/></svg>Reading</button>
+        </nav>
+      </div>
+    </aside>
+
+    <main class="content" id="content">
+      <header class="toolbar glass" data-refract>
+        <button class="icon-btn" id="toggle-side" aria-label="Hide sidebar" aria-controls="win" aria-expanded="true"><svg class="i"><use href="#i-sidebar"/></svg></button>
+        <div class="title-block"><strong>Recents</strong><span>48 entries</span></div>
+        <div class="spacer"></div>
+        <div class="group-cap" role="group" aria-label="View">
+          <button class="icon-btn" aria-label="List view" data-toggle aria-pressed="true"><svg class="i"><use href="#i-list"/></svg></button>
+          <button class="icon-btn" aria-label="Photo view" data-toggle aria-pressed="false"><svg class="i"><use href="#i-photo"/></svg></button>
+        </div>
+        <label class="search">
+          <svg class="i i--sm"><use href="#i-search"/></svg>
+          <span class="visually-hidden">Search entries</span>
+          <input type="search" placeholder="Search entries">
+        </label>
+        <button class="icon-btn" aria-label="Share"><svg class="i"><use href="#i-share"/></svg></button>
+        <button class="primary"><svg class="i i--sm"><use href="#i-plus"/></svg><span class="label">New Entry</span></button>
+      </header>
+      <div class="scroll-edge"></div>
+
+      <img class="hero" src="assets/landscape.svg" alt="Sunset over a mountain lake">
+
+      <div class="body">
+        <p class="eyebrow">Sunday, 11 October</p>
+        <h1>Evening at the lake</h1>
+        <p class="lede">The wind dropped just before seven and the water went flat. We stayed until the last
+          of the light was gone behind the ridge.</p>
+
+        <h2>This week</h2>
+        <div class="list-group">
+          <div class="list-row"><div class="thumb g1"></div><div class="row-text"><strong>Market morning</strong><span>Figs, the last tomatoes, and a loaf from the stall by the fountain.</span></div><span class="row-date tnum">Fri</span><svg class="i i--sm chev"><use href="#i-chevron-right"/></svg></div>
+          <div class="list-row"><div class="thumb g2"></div><div class="row-text"><strong>Ridge walk</strong><span>Eleven kilometres, two lakes, and one very cold swim.</span></div><span class="row-date tnum">Wed</span><svg class="i i--sm chev"><use href="#i-chevron-right"/></svg></div>
+          <div class="list-row"><div class="thumb g3"></div><div class="row-text"><strong>Garden notes</strong><span>Moved the mint into a pot before it takes over the bed again.</span></div><span class="row-date tnum">Tue</span><svg class="i i--sm chev"><use href="#i-chevron-right"/></svg></div>
+          <div class="list-row"><div class="thumb g4"></div><div class="row-text"><strong>Late train home</strong><span>Read half a novel between Basel and Zürich.</span></div><span class="row-date tnum">Mon</span><svg class="i i--sm chev"><use href="#i-chevron-right"/></svg></div>
+        </div>
+
+        <h2>On this day</h2>
+        <div class="cards">
+          <div class="card"><div class="img g5"></div><div><strong>Harvest lunch</strong><br><span>2025</span></div></div>
+          <div class="card"><div class="img g2"></div><div><strong>First snow on the pass</strong><br><span>2024</span></div></div>
+          <div class="card"><div class="img g4"></div><div><strong>Night ferry</strong><br><span>2023</span></div></div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var win = document.getElementById('win');
+    var btn = document.getElementById('toggle-side');
+    if (window.matchMedia('(max-width: 860px)').matches) setSide(false);
+    function setSide(open) {
+      win.classList.toggle('no-side', !open);
+      btn.setAttribute('aria-expanded', String(open));
+      btn.setAttribute('aria-label', open ? 'Hide sidebar' : 'Show sidebar');
+    }
+    btn.addEventListener('click', function () { setSide(win.classList.contains('no-side')); });
+  })();
+</script>
+</body>
+</html>

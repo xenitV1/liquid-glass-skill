@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 860" preserveAspectRatio="xMidYMid slice">
+  <!-- Hand-drawn demo map, made up streets. Straight roads and labels are what
+       show refraction best when glass passes over them. -->
+  <rect width="400" height="860" fill="#F3EFE6"/>
+  <path d="M-10 610 C 80 560, 150 640, 240 600 S 380 520, 420 560 L420 760 L-10 760 Z" fill="#A9D3F5"/>
+  <rect x="210" y="140" width="150" height="120" rx="14" fill="#C9E7C0"/>
+  <rect x="24" y="330" width="120" height="150" rx="14" fill="#C9E7C0"/>
+  <g stroke="#FFFFFF" stroke-linecap="round" fill="none">
+    <path d="M-10 90 L 420 150" stroke-width="16"/>
+    <path d="M-10 300 L 420 280" stroke-width="12"/>
+    <path d="M-10 520 L 420 470" stroke-width="12"/>
+    <path d="M70 -10 L 120 880" stroke-width="12"/>
+    <path d="M190 -10 L 180 880" stroke-width="16"/>
+    <path d="M330 -10 L 300 880" stroke-width="10"/>
+    <path d="M-10 820 L 420 790" stroke-width="10"/>
+  </g>
+  <g stroke="#FFD66B" stroke-linecap="round" fill="none">
+    <path d="M190 -10 L 180 880" stroke-width="8"/>
+  </g>
+  <g fill="#8A8478" font-family="-apple-system, 'SF Pro Text', Inter, sans-serif" font-size="11" font-weight="600">
+    <text x="20" y="84" transform="rotate(8 20 84)">Harbour Road</text>
+    <text x="230" y="270" transform="rotate(-3 230 270)">Mill Street</text>
+    <text x="210" y="486" transform="rotate(-7 210 486)">Canal Walk</text>
+    <text x="196" y="380" transform="rotate(-89 196 380)">King's Avenue</text>
+    <text x="46" y="410" fill="#4F8A45">Elm Park</text>
+    <text x="246" y="204" fill="#4F8A45">Rose Garden</text>
+    <text x="150" y="690" fill="#3D7FB8">Old Basin</text>
+  </g>
+  <g>
+    <circle cx="250" cy="380" r="13" fill="#FF8D28"/>
+    <path d="M245 375h10v10h-10z" fill="#fff" opacity=".9"/>
+    <circle cx="120" cy="200" r="13" fill="#CB30E0"/>
+    <circle cx="120" cy="200" r="4.5" fill="#fff"/>
+    <circle cx="186" cy="560" r="9" fill="#0088FF" stroke="#fff" stroke-width="3"/>
+  </g>
+</svg>

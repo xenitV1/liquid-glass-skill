@@ -1,0 +1,159 @@
+/* ============================================================================
+   Shared helpers for the example pages. Everything Apple-specific comes from
+   ../../assets/tokens.css; this file only adds demo scenery, the icon helper,
+   and the in-page "preview" switches (theme, reduced transparency).
+   ========================================================================== */
+
+/* --- example tint ----------------------------------------------------------
+   White on the token default #0088FF is ~3.5:1, too low for small text on a
+   filled button. The examples use Apple's increased-contrast blue for light
+   mode instead (white on #1E6EF4 clears 4.5:1). Dark mode keeps the token value
+   because its on-tint is dark navy. */
+:root {
+  --tint:       #1E6EF4;
+  --tint-hover: #1A5FD3;
+  --tint-soft:  rgba(30, 110, 244, 0.12);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not(.light) {
+    --tint: #4DA3FF; --tint-hover: #7CBBFF; --tint-soft: rgba(77, 163, 255, 0.16);
+  }
+}
+:root[data-theme='dark'] {
+  --tint: #4DA3FF; --tint-hover: #7CBBFF; --tint-soft: rgba(77, 163, 255, 0.16);
+}
+
+/* --- glass that adapts to what is behind it --------------------------------
+   Apple: small glass elements turn dark over dark content and light over light
+   content. On the web that is a token swap on the scene, not a filter. */
+[data-tone='dark'] {
+  --glass:        rgba(38, 38, 43, 0.62);
+  --glass-thick:  rgba(32, 32, 36, 0.94);
+  --glass-rim:    rgba(255, 255, 255, 0.24);
+  --glass-rim-2:  rgba(255, 255, 255, 0.09);
+  --glass-edge:   rgba(0, 0, 0, 0.45);
+  --glass-shadow: 0 10px 34px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.35);
+  --glass-sheen:  0.15;
+  --glass-refract: rgba(30, 30, 34, 0.42);
+  --rim-1:        rgba(255, 255, 255, 0.45);
+  --rim-2:        rgba(255, 255, 255, 0.07);
+  --rim-3:        rgba(255, 255, 255, 0.22);
+  --label:        #F5F5F7;
+  --label-2:      #AEAEB4;
+  --fill:         rgba(120, 120, 128, 0.32);
+  --fill-2:       rgba(120, 120, 128, 0.2);
+  --separator:    rgba(255, 255, 255, 0.12);
+  --surface:      #2C2C30;
+  color: var(--label);
+}
+
+/* --- icons (SF Symbols are not licensed for the web; these are stand-ins) --- */
+.i {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.i--sm { width: 16px; height: 16px; }
+.i--lg { width: 24px; height: 24px; }
+.i--fill { fill: currentColor; stroke: none; }
+
+/* --- scenery: the content layer the glass refracts -------------------------- */
+.scene {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: var(--r-panel);
+  background-color: #8FA7D8;
+  background-position: center;
+  background-size: cover;
+}
+.scene--landscape { background-image: url('landscape.svg'); }
+.scene--citrus {
+  background-image:
+    radial-gradient(60% 80% at 15% 20%, #FFD84D 0%, transparent 60%),
+    radial-gradient(55% 70% at 85% 25%, #FF7A59 0%, transparent 62%),
+    radial-gradient(70% 80% at 60% 100%, #FF4F8B 0%, transparent 65%),
+    linear-gradient(135deg, #FFB347, #FF6F61);
+}
+.scene--ocean {
+  background-image:
+    radial-gradient(60% 70% at 10% 10%, #7FE0E8 0%, transparent 60%),
+    radial-gradient(60% 70% at 90% 30%, #4E7CF5 0%, transparent 60%),
+    radial-gradient(70% 80% at 40% 100%, #2BC4A9 0%, transparent 65%),
+    linear-gradient(160deg, #5BB8F0, #2D5FD6);
+}
+.scene--aurora {
+  background-color: #0B1230;
+  background-image:
+    radial-gradient(50% 60% at 20% 25%, rgba(72, 230, 170, 0.75) 0%, transparent 62%),
+    radial-gradient(45% 55% at 75% 20%, rgba(140, 90, 255, 0.8) 0%, transparent 62%),
+    radial-gradient(60% 60% at 60% 95%, rgba(255, 80, 160, 0.55) 0%, transparent 65%),
+    linear-gradient(180deg, #0B1230, #151A45);
+}
+
+/* --- in-page "Reduce Transparency" preview ---------------------------------
+   Mirrors the token file's @media (prefers-reduced-transparency) block so the
+   fallback can be seen without changing OS settings. */
+:root[data-rt] .glass,
+:root[data-rt] .glass-clear {
+  background: var(--glass-thick);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+:root[data-rt] .glass.is-refracting { background: var(--glass-thick); }
+:root[data-rt] .glass::after,
+:root[data-rt] .scroll-edge { display: none; }
+
+/* --- in-page "no backdrop-filter support" preview ---------------------------
+   Mirrors the token file's @supports not (...) block. */
+:root[data-nobf] .glass,
+:root[data-nobf] .glass-clear {
+  background: var(--glass-thick);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* --- the examples' own page bar (shared by every page) ------------------- */
+.page-bar { gap: 14px; padding: 0 20px; }
+.brand { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+.brand strong { font-size: var(--t-subhead); font-weight: 600; }
+.brand span { font-size: var(--t-caption-1); color: var(--label-2); }
+.page-bar nav { display: flex; gap: 2px; margin-left: 8px; }
+.page-bar nav a {
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  font-size: var(--t-footnote);
+  font-weight: 500;
+  color: var(--label-2);
+  text-decoration: none;
+  transition: background var(--dur-normal) var(--ease-out), color var(--dur-normal) var(--ease-out);
+}
+.page-bar nav a:hover { background: var(--fill); color: var(--label); }
+.page-bar nav a[aria-current] { color: var(--label); background: var(--fill); }
+.page-bar nav a:active { transform: scale(0.96); }
+.spacer { flex: 1; }
+/* 32px visible button, 44px hit area */
+.icon-btn { position: relative; }
+.icon-btn::before { content: ''; position: absolute; inset: -6px; }
+.icon-btn[aria-pressed='true'] { background: var(--fill); color: var(--label); }
+@media (max-width: 760px) {
+  .page-bar nav { display: none; }
+  .brand span { display: none; }
+}
+@media (max-width: 420px) {
+  .segmented button { padding: 5px 10px; }
+}
+

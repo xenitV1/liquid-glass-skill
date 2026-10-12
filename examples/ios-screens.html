@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>iOS Glass Screens</title>
+<meta name="description" content="Two iOS 26 style screens in HTML and CSS: clear glass controls over a photo, and regular glass controls and a sheet over a map. Built with the apple-liquid-glass skill.">
+<link rel="stylesheet" href="../assets/tokens.css">
+<link rel="stylesheet" href="assets/examples.css">
+<script src="../assets/refraction.js" defer></script>
+<style>
+  .page { max-width: 1100px; margin: 0 auto; padding: 36px 24px 80px; }
+  .intro { max-width: 640px; margin-bottom: 32px; }
+  .intro h1 { margin: 0 0 10px; font-size: var(--t-large-title); line-height: var(--lh-large-title); font-weight: 700; letter-spacing: var(--tr-display); }
+  .intro p { margin: 0; font-size: var(--t-body); line-height: 1.5; color: var(--label-2); }
+  .phones { display: flex; flex-wrap: wrap; justify-content: center; gap: 48px; }
+  figure { margin: 0; width: 375px; max-width: 100%; }
+  figcaption { padding: 16px 4px 0; }
+  figcaption h2 { margin: 0 0 4px; font-size: var(--t-headline); font-weight: 600; }
+  figcaption p { margin: 0; font-size: var(--t-subhead); line-height: var(--lh-subhead); color: var(--label-2); }
+
+  /* --- device frame ------------------------------------------------------- */
+  .phone {
+    height: 790px;
+    padding: 10px;
+    box-sizing: border-box;
+    border-radius: 58px;
+    background: #0B0B0D;
+    box-shadow: 0 0 0 1.5px #3A3A3E, 0 30px 70px rgba(0, 0, 0, 0.28);
+  }
+  .screen { position: relative; height: 100%; overflow: hidden; isolation: isolate; border-radius: 48px; background: #000; }
+  .island { position: absolute; top: 11px; left: 50%; z-index: 9; width: 118px; height: 34px; margin-left: -59px; border-radius: 20px; background: #000; }
+  .status {
+    position: absolute; top: 0; left: 0; right: 0; z-index: 8;
+    display: flex; justify-content: space-between; align-items: center;
+    height: 54px; padding: 4px 34px 0 40px;
+    font-size: var(--t-subhead); font-weight: 600;
+  }
+  .status .icons { display: flex; gap: 6px; }
+  .on-photo { color: #fff; }
+
+  /* --- shared glass controls -------------------------------------------- */
+  .gbtn {
+    display: grid; place-items: center;
+    width: 48px; height: 48px; padding: 0;
+    border: 0; border-radius: var(--r-pill);
+    color: var(--label);
+    cursor: pointer;
+    transition: transform var(--dur-fast) var(--ease-out);
+  }
+  .gbtn:active, .cap button:active { transform: scale(0.9); }
+  .cap { display: flex; align-items: center; height: 48px; padding: 0 4px; border-radius: var(--r-pill); }
+  .cap button {
+    display: grid; place-items: center;
+    width: 46px; height: 46px; padding: 0;
+    border: 0; border-radius: var(--r-pill);
+    background: none; color: inherit; cursor: pointer;
+  }
+  .glass-clear { color: #fff; }
+
+  /* --- 1. Photo viewer: clear glass over media --------------------------- */
+  .photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 62% center; }
+  .top-row, .bottom-row {
+    position: absolute; left: 14px; right: 14px; z-index: 5;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .top-row { top: 58px; }
+  .bottom-row { bottom: 30px; }
+  .title-cap { flex-direction: column; justify-content: center; padding: 0 20px; line-height: 1.15; }
+  .title-cap strong { font-size: var(--t-subhead); font-weight: 600; }
+  .title-cap span { font-size: var(--t-caption-1); opacity: 0.9; }
+  .home-bar { position: absolute; bottom: 8px; left: 50%; z-index: 9; width: 134px; height: 5px; margin-left: -67px; border-radius: 3px; background: rgba(255, 255, 255, 0.85); }
+  .home-bar.dark { background: rgba(0, 0, 0, 0.8); }
+
+  /* --- 2. Map: regular glass controls and a sheet ------------------------ */
+  .map { position: absolute; inset: 0; background: #F3EFE6 url('assets/map.svg') center / cover; }
+  .on-map { color: #1D1D1F; }
+  .map-tools { position: absolute; top: 62px; right: 14px; z-index: 5; display: flex; flex-direction: column; padding: 4px 0; border-radius: 26px; }
+  .map-tools button { display: grid; place-items: center; width: 48px; height: 46px; border: 0; background: none; color: var(--label); cursor: pointer; }
+  .map-tools button:active { transform: scale(0.9); }
+  .map-tools hr { width: 26px; margin: 0 auto; border: 0; border-top: 0.5px solid var(--separator); }
+  .sheet {
+    position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 5;
+    padding: 8px 14px 26px;
+    border-radius: 40px;
+  }
+  .grabber { width: 36px; height: 5px; margin: 0 auto 10px; border-radius: 3px; background: var(--label-3); opacity: 0.55; }
+  .search-row { display: flex; gap: 10px; align-items: center; }
+  .search {
+    flex: 1; display: flex; align-items: center; gap: 8px;
+    height: 46px; padding: 0 14px; border-radius: var(--r-pill);
+    background: var(--fill); color: var(--label-2);
+    font-size: var(--t-body);
+  }
+  .avatar { width: 40px; height: 40px; flex: none; border-radius: 50%; background: linear-gradient(140deg, #FFB86B, #FF5E62); }
+  .sheet h3 { margin: 18px 4px 6px; font-size: var(--t-footnote); font-weight: 600; color: var(--label-2); }
+  .places { margin: 0; padding: 4px 12px; border-radius: 22px; background: var(--surface); list-style: none; }
+  .places li { position: relative; display: flex; align-items: center; gap: 12px; min-height: 56px; }
+  .places li + li::before { content: ''; position: absolute; top: 0; left: 50px; right: 0; height: 0.5px; background: var(--separator); }
+  .places .dot { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border-radius: 50%; color: #fff; }
+  .places strong { display: block; font-size: var(--t-body); font-weight: 600; }
+  .places span { font-size: var(--t-footnote); color: var(--label-2); }
+</style>
+</head>
+<body>
+<script src="assets/examples.js"></script>
+
+<header class="toolbar page-bar glass" data-refract>
+  <div class="brand"><strong>Liquid Glass</strong><span>Examples</span></div>
+  <nav aria-label="Examples">
+    <a href="glass-components.html">Parts</a>
+    <a href="mac-app-window.html">macOS window</a>
+    <a href="ios-screens.html" aria-current="page">iOS screens</a>
+  </nav>
+  <div class="spacer"></div>
+  <div class="segmented" role="tablist" aria-label="Appearance" data-select-group="selected">
+    <button role="tab" data-set-theme="auto" aria-selected="true">Auto</button>
+    <button role="tab" data-set-theme="light" aria-selected="false">Light</button>
+    <button role="tab" data-set-theme="dark" aria-selected="false">Dark</button>
+  </div>
+  <button class="icon-btn" data-toggle-rt aria-pressed="false" title="Preview Reduce Transparency" aria-label="Preview Reduce Transparency">
+    <svg class="i"><use href="#i-transparency"/></svg>
+  </button>
+</header>
+<div class="scroll-edge"></div>
+
+<main class="page">
+  <section class="intro">
+    <h1>iOS screens</h1>
+    <p>Clear glass over a photo, regular glass over a map. The controls bend what passes under their edges;
+      the photo and the map stay untouched.</p>
+  </section>
+
+  <div class="phones">
+    <figure>
+      <div class="phone">
+        <div class="screen">
+          <img class="photo" src="assets/landscape.svg" alt="Sunset over a mountain lake">
+          <div class="island"></div>
+          <div class="status on-photo"><span class="tnum">9:41</span><span class="icons"><svg class="i i--sm"><use href="#i-wifi"/></svg></span></div>
+          <div class="top-row">
+            <button class="gbtn glass glass-clear glass-dim" data-refract aria-label="Back"><svg class="i"><use href="#i-chevron-left"/></svg></button>
+            <div class="cap title-cap glass glass-clear glass-dim" data-refract><strong>Today</strong><span class="tnum">18:42</span></div>
+            <button class="gbtn glass glass-clear glass-dim" data-refract aria-label="More"><svg class="i"><use href="#i-ellipsis"/></svg></button>
+          </div>
+          <div class="bottom-row">
+            <button class="gbtn glass glass-clear glass-dim" data-refract aria-label="Share"><svg class="i"><use href="#i-share"/></svg></button>
+            <div class="cap glass glass-clear glass-dim" data-refract role="group" aria-label="Photo actions">
+              <button aria-label="Favorite" data-toggle aria-pressed="false"><svg class="i"><use href="#i-heart"/></svg></button>
+              <button aria-label="Info"><svg class="i"><use href="#i-info"/></svg></button>
+              <button aria-label="Edit"><svg class="i"><use href="#i-pencil"/></svg></button>
+            </div>
+            <button class="gbtn glass glass-clear glass-dim" data-refract aria-label="Delete"><svg class="i"><use href="#i-trash"/></svg></button>
+          </div>
+          <div class="home-bar"></div>
+        </div>
+      </div>
+      <figcaption>
+        <h2>Photo viewer</h2>
+        <p>Clear glass, because the photo is the point. The sky is bright, so every control has the 35% dark
+          layer under its glyphs.</p>
+      </figcaption>
+    </figure>
+
+    <figure>
+      <div class="phone">
+        <div class="screen">
+          <div class="map" role="img" aria-label="Street map"></div>
+          <div class="island"></div>
+          <div class="status on-map"><span class="tnum">9:41</span><span class="icons"><svg class="i i--sm"><use href="#i-wifi"/></svg></span></div>
+          <div class="map-tools glass" data-refract role="group" aria-label="Map tools">
+            <button aria-label="Map style"><svg class="i"><use href="#i-stack"/></svg></button>
+            <hr>
+            <button aria-label="Show my location"><svg class="i"><use href="#i-pin"/></svg></button>
+          </div>
+          <div class="sheet glass glass-text" data-refract role="dialog" aria-label="Search">
+            <div class="grabber" aria-hidden="true"></div>
+            <div class="search-row">
+              <div class="search"><svg class="i"><use href="#i-search"/></svg>Search Maps</div>
+              <div class="avatar" aria-hidden="true"></div>
+            </div>
+            <h3>Recents</h3>
+            <ul class="places">
+              <li><span class="dot" style="background:#E5652A"><svg class="i i--sm"><use href="#i-fork"/></svg></span><div><strong>Corner Bakery</strong><span>Mill Street · 6 min walk</span></div></li>
+              <li><span class="dot" style="background:#2E8B4A"><svg class="i i--sm"><use href="#i-pin"/></svg></span><div><strong>Elm Park</strong><span>Harbour Road · 12 min walk</span></div></li>
+            </ul>
+          </div>
+          <div class="home-bar dark"></div>
+        </div>
+      </div>
+      <figcaption>
+        <h2>Map</h2>
+        <p>Regular glass for the tools and the search sheet. Street lines and names bend at the edges of the
+          controls; the rows inside the sheet are solid so they stay easy to read.</p>
+      </figcaption>
+    </figure>
+  </div>
+</main>
+</body>
+</html>

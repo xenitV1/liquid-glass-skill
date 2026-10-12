@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <!-- Hand-made demo scene (no photo licence needed). Bright sky on purpose:
+       it is the case where clear glass needs the 35% dimming layer. -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6FA8F0"/>
+      <stop offset="0.45" stop-color="#F7C6A3"/>
+      <stop offset="0.62" stop-color="#FFE3B8"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFFBEA"/>
+      <stop offset="0.35" stop-color="#FFE9A8"/>
+      <stop offset="1" stop-color="#FFE9A8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="m1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9C8FC7"/>
+      <stop offset="1" stop-color="#C9A6C2"/>
+    </linearGradient>
+    <linearGradient id="m2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5E6BA8"/>
+      <stop offset="1" stop-color="#8D86B8"/>
+    </linearGradient>
+    <linearGradient id="m3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2F4F7A"/>
+      <stop offset="1" stop-color="#3E5E86"/>
+    </linearGradient>
+    <linearGradient id="lake" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F2C9AE"/>
+      <stop offset="0.5" stop-color="#7FA6D6"/>
+      <stop offset="1" stop-color="#2C4A78"/>
+    </linearGradient>
+    <linearGradient id="shore" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2E5A4C"/>
+      <stop offset="1" stop-color="#173A33"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#sky)"/>
+  <circle cx="1060" cy="470" r="260" fill="url(#sun)"/>
+  <circle cx="1060" cy="470" r="62" fill="#FFF8E1"/>
+  <path d="M0 560 L170 430 L300 500 L460 380 L620 500 L760 420 L900 520 L1080 400 L1260 500 L1420 410 L1600 520 L1600 640 L0 640 Z" fill="url(#m1)" opacity="0.85"/>
+  <path d="M0 600 L120 520 L260 590 L420 470 L560 580 L700 510 L860 610 L1010 520 L1180 610 L1340 500 L1480 590 L1600 540 L1600 660 L0 660 Z" fill="url(#m2)"/>
+  <path d="M0 650 L200 580 L340 640 L520 560 L700 650 L880 590 L1060 660 L1240 600 L1420 660 L1600 610 L1600 690 L0 690 Z" fill="url(#m3)"/>
+  <rect y="680" width="1600" height="320" fill="url(#lake)"/>
+  <ellipse cx="1060" cy="700" rx="90" ry="10" fill="#FFF3D6" opacity="0.8"/>
+  <ellipse cx="1060" cy="730" rx="140" ry="6" fill="#FFF3D6" opacity="0.45"/>
+  <ellipse cx="1060" cy="770" rx="190" ry="5" fill="#FFF3D6" opacity="0.25"/>
+  <path d="M0 860 C 260 820, 420 900, 640 880 C 860 860, 980 930, 1600 900 L1600 1000 L0 1000 Z" fill="url(#shore)"/>
+  <g fill="#173A33">
+    <path d="M140 870 l26 -120 l26 120 Z"/>
+    <path d="M190 880 l20 -90 l20 90 Z"/>
+    <path d="M1380 880 l30 -140 l30 140 Z"/>
+    <path d="M1440 890 l22 -96 l22 96 Z"/>
+  </g>
+</svg>

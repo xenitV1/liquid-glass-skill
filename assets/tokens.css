@@ -1,0 +1,526 @@
+/* ============================================================================
+   Apple Liquid Glass — token layer and primitives for the web
+   ----------------------------------------------------------------------------
+   Drop this in, then build components from the tokens. It encodes the rules in
+   SKILL.md so you don't re-derive them: the grouped-background inversion (grey
+   page, white cards), hairline separators, the glass primitive with its
+   refraction rim, the scroll edge effect, and the three accessibility
+   fallbacks.
+
+   Theme hooks: the bare :root block is the complete light palette. Dark is
+   redefined three ways so it works whichever convention the project uses —
+   prefers-color-scheme, a [data-theme="dark"] attribute, or a .dark class.
+   Only tokens are redefined; never style a component inside a theme block.
+   ========================================================================== */
+
+:root {
+  /* --- ground and surfaces -------------------------------------------------
+     Grouped backgrounds: the page is grey, cards are white. Inverting the web
+     default is a large part of why Apple layouts read as Apple. */
+  --ground:        #F2F2F7;   /* systemGray6 light — grouped background */
+  --ground-2:      #E9E9EF;   /* slightly deeper, for a gradient ground */
+  --surface:       #FFFFFF;   /* secondary grouped — cards */
+  --surface-2:     #F6F6F8;   /* tertiary — nested inside a card */
+
+  /* --- labels: Apple's four levels ---------------------------------------- */
+  --label:         #1D1D1F;
+  --label-2:       #6E6E73;
+  --label-3:       #8E8E93;   /* systemGray */
+  --label-4:       #B0B0B6;   /* quaternary — avoid on thin materials */
+
+  /* --- hairlines and fills ------------------------------------------------
+     Separators are 0.5px at low alpha, never 1px solid grey. */
+  --separator:     rgba(60, 60, 67, 0.13);
+  --fill:          rgba(120, 120, 128, 0.12);   /* control tracks */
+  --fill-2:        rgba(120, 120, 128, 0.08);   /* hover */
+
+  /* --- tint ----------------------------------------------------------------
+     One brand tint. Colour is rationed: one emphasised element per bar. */
+  --tint:          #0088FF;   /* replace with the brand colour. White on #0088FF is
+                                ~3.5:1: enough for bold or 18pt+ text (3:1), not
+                                for small regular/semibold text (4.5:1). */
+  --tint-hover:    #006FD6;
+  --tint-soft:     rgba(0, 136, 255, 0.12);
+  --on-tint:       #FFFFFF;
+
+  /* --- iOS system colours, for categorical meaning only ------------------- */
+  --sys-red:       #FF383C;
+  --sys-orange:    #FF8D28;
+  --sys-yellow:    #FFCC00;
+  --sys-green:     #34C759;
+  --sys-teal:      #00C3D0;
+  --sys-blue:      #0088FF;
+  --sys-indigo:    #6155F5;
+  --sys-purple:    #CB30E0;
+  --sys-pink:      #FF2D55;
+
+  /* --- Liquid Glass, regular variant --------------------------------------
+     Close to opaque. If a picture reads through it, it is not "regular". */
+  --glass:         rgba(252, 252, 254, 0.72);
+  --glass-thick:   rgba(252, 252, 254, 0.92);   /* reduced-transparency swap */
+  --glass-rim:     rgba(255, 255, 255, 0.85);   /* the refraction highlight */
+  --glass-rim-2:   rgba(255, 255, 255, 0.35);
+  --glass-edge:    rgba(0, 0, 0, 0.06);
+  --glass-shadow:  0 8px 26px rgba(0, 0, 0, 0.10), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --glass-blur:    saturate(180%) blur(28px);
+  --glass-sheen:   0.30;
+  /* Rim light: brightest on the upper-left, as light catching a bevel. */
+  --rim-1:         rgba(255, 255, 255, 0.90);
+  --rim-2:         rgba(255, 255, 255, 0.16);
+  --rim-3:         rgba(255, 255, 255, 0.55);
+  /* Tint used while refraction.js bends the backdrop. Lower than --glass so
+     the bent picture shows; the blur inside the filter keeps text legible. */
+  --glass-refract: rgba(252, 252, 254, 0.42);
+
+  /* --- content-layer elevation: shadows, never glass ---------------------- */
+  --card-shadow:   0 1px 2px rgba(0, 0, 0, 0.05), 0 6px 20px rgba(0, 0, 0, 0.045);
+  --card-shadow-h: 0 2px 4px rgba(0, 0, 0, 0.06), 0 14px 34px rgba(0, 0, 0, 0.085);
+
+  /* --- radii ---------------------------------------------------------------
+     Nest these so the visual gap between an inner and outer edge stays even.
+     Apple ships ConcentricRectangle for this but publishes no formula — the
+     even-gap convention below is a derived one, not an Apple specification. */
+  --r-panel: 22px;
+  --r-card:  18px;
+  --r-row:   12px;
+  --r-ctrl:  10px;
+  --r-pill:  999px;
+
+  /* --- type ---------------------------------------------------------------- */
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
+          'Inter', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, monospace;
+
+  /* iOS text-style ladder */
+  --t-large-title: 34px;  --lh-large-title: 41px;
+  --t-title-1:     28px;  --lh-title-1:     34px;
+  --t-title-2:     22px;  --lh-title-2:     28px;
+  --t-title-3:     20px;  --lh-title-3:     25px;
+  --t-headline:    17px;  --lh-headline:    22px;
+  --t-body:        17px;  --lh-body:        22px;
+  --t-callout:     16px;  --lh-callout:     21px;
+  --t-subhead:     15px;  --lh-subhead:     20px;
+  --t-footnote:    13px;  --lh-footnote:    18px;
+  --t-caption-1:   12px;  --lh-caption-1:   16px;
+  --t-caption-2:   11px;  --lh-caption-2:   13px;
+
+  /* web tracking convention (see typography.md §8). Apple's own SF Pro table is
+     positive above ~24pt; these negative values suit web/Inter headings and are
+     a design choice, not Apple's numbers. */
+  --tr-display: -0.032em;
+  --tr-title:   -0.022em;
+  --tr-body:    -0.012em;
+  --tr-caption:  0em;
+
+  /* --- motion --------------------------------------------------------------
+     Apple names no curve in the HIG. These are sound defaults, not a spec. */
+  --ease-out:    cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-fast:    120ms;
+  --dur-normal:  200ms;
+  --dur-slow:    320ms;
+
+  --toolbar-h: 52px;
+}
+
+/* --- dark: base and elevated, not an inversion ----------------------------
+   Base is near-black and recedes; elevated is lighter and comes forward.
+   Painting everything pure black is the classic dark-mode mistake. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not(.light) {
+    --ground:        #131316;   /* base */
+    --ground-2:      #0B0B0D;
+    --surface:       #1D1D20;   /* elevated */
+    --surface-2:     #26262A;
+
+    --label:         #F5F5F7;
+    --label-2:       #9B9BA1;
+    --label-3:       #79797F;
+    --label-4:       #5A5A60;
+
+    --separator:     rgba(255, 255, 255, 0.11);
+    --fill:          rgba(120, 120, 128, 0.24);
+    --fill-2:        rgba(120, 120, 128, 0.16);
+
+    --tint:          #4DA3FF;
+    --tint-hover:    #7CBBFF;
+    --tint-soft:     rgba(77, 163, 255, 0.16);
+    --on-tint:       #06213F;
+
+    --sys-red:       #FF4245;
+    --sys-orange:    #FF9230;
+    --sys-yellow:    #FFD600;
+    --sys-green:     #30D158;
+    --sys-teal:      #00D2E0;
+    --sys-blue:      #0091FF;
+    --sys-indigo:    #6D7CFF;
+    --sys-purple:    #DB34F2;
+    --sys-pink:      #FF375F;
+
+    --glass:         rgba(38, 38, 43, 0.72);
+    --glass-thick:   rgba(32, 32, 36, 0.94);
+    --glass-rim:     rgba(255, 255, 255, 0.22);
+    --glass-rim-2:   rgba(255, 255, 255, 0.08);
+    --glass-edge:    rgba(0, 0, 0, 0.5);
+    --glass-shadow:  0 10px 34px rgba(0, 0, 0, 0.55), 0 1px 3px rgba(0, 0, 0, 0.4);
+    --glass-sheen:   0.15;
+    --rim-1:         rgba(255, 255, 255, 0.42);
+    --rim-2:         rgba(255, 255, 255, 0.06);
+    --rim-3:         rgba(255, 255, 255, 0.20);
+    --glass-refract: rgba(30, 30, 34, 0.48);
+
+    --card-shadow:   0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.3);
+    --card-shadow-h: 0 2px 4px rgba(0, 0, 0, 0.45), 0 14px 34px rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* Explicit dark, whichever hook the project uses. Keep in sync with the block
+   above — same tokens, same values. */
+:root[data-theme='dark'],
+:root.dark {
+  --ground: #131316;  --ground-2: #0B0B0D;
+  --surface: #1D1D20; --surface-2: #26262A;
+  --label: #F5F5F7;   --label-2: #9B9BA1;
+  --label-3: #79797F; --label-4: #5A5A60;
+  --separator: rgba(255, 255, 255, 0.11);
+  --fill: rgba(120, 120, 128, 0.24);
+  --fill-2: rgba(120, 120, 128, 0.16);
+  --tint: #4DA3FF;    --tint-hover: #7CBBFF;
+  --tint-soft: rgba(77, 163, 255, 0.16);
+  --on-tint: #06213F;
+  --sys-red: #FF4245;     --sys-orange: #FF9230;
+  --sys-yellow: #FFD600;  --sys-green: #30D158;
+  --sys-teal: #00D2E0;    --sys-blue: #0091FF;
+  --sys-indigo: #6D7CFF;  --sys-purple: #DB34F2;
+  --sys-pink: #FF375F;
+  --glass: rgba(38, 38, 43, 0.72);
+  --glass-thick: rgba(32, 32, 36, 0.94);
+  --glass-rim: rgba(255, 255, 255, 0.22);
+  --glass-rim-2: rgba(255, 255, 255, 0.08);
+  --glass-edge: rgba(0, 0, 0, 0.5);
+  --glass-shadow: 0 10px 34px rgba(0, 0, 0, 0.55), 0 1px 3px rgba(0, 0, 0, 0.4);
+  --glass-sheen: 0.15;
+  --rim-1: rgba(255, 255, 255, 0.42);
+  --rim-2: rgba(255, 255, 255, 0.06);
+  --rim-3: rgba(255, 255, 255, 0.20);
+  --glass-refract: rgba(30, 30, 34, 0.48);
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.3);
+  --card-shadow-h: 0 2px 4px rgba(0, 0, 0, 0.45), 0 14px 34px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================================================
+   Base
+   ========================================================================== */
+
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--label);
+  font-family: var(--font);
+  font-size: var(--t-subhead);
+  line-height: 1.45;
+  letter-spacing: var(--tr-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Glass over a flat colour renders as flat colour. Give the material something
+   to refract. Tune the hues to the brand; keep the alphas this low. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(900px 620px at 12% -8%, rgba(0, 136, 255, 0.10), transparent 60%),
+    radial-gradient(760px 560px at 92% 4%, rgba(97, 85, 245, 0.09), transparent 62%),
+    linear-gradient(180deg, var(--ground) 0%, var(--ground-2) 100%);
+}
+
+:focus-visible {
+  outline: 2.5px solid var(--tint);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ============================================================================
+   Liquid Glass — functional layer only. Never on a content card.
+   ========================================================================== */
+
+.glass {
+  position: relative;
+  isolation: isolate;   /* keeps the ::after sheen below the children */
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  box-shadow:
+    inset 0 0.5px 0 var(--glass-rim),
+    inset 0 0 0 0.5px var(--glass-rim-2),
+    var(--glass-shadow);
+}
+
+/* Opaque fallback for browsers with no backdrop-filter support at all (not the
+   same as the prefers-reduced-transparency block below, which handles a user
+   setting on a browser that DOES support it). Without this rule those browsers
+   render the glass tint as flat, too-transparent color with no blur. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass,
+  .glass-clear {
+    background: var(--glass-thick);
+  }
+}
+
+/* The specular sheen. Without it the surface reads as plain transparency —
+   this is the single detail that separates Liquid Glass from glassmorphism. */
+.glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;          /* above the glass fill, below the labels */
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, var(--glass-sheen)) 0%,
+    rgba(255, 255, 255, calc(var(--glass-sheen) * 0.2)) 34%,
+    transparent 62%
+  );
+}
+
+/* The rim: a thin gradient edge, brightest on the upper-left, fainter along
+   the middle, picking up again lower-right. A uniform 1px white border reads
+   as a sticker; the uneven rim reads as a thick bevel catching light. */
+.glass::before,
+.glass-clear::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;           /* above the sheen, never blocks clicks */
+  border-radius: inherit;
+  padding: 1px;
+  pointer-events: none;
+  background: linear-gradient(135deg, var(--rim-1) 0%, var(--rim-2) 45%, var(--rim-3) 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+/* While refraction.js is bending the backdrop (Chromium only), lower the tint
+   so the bent picture shows through. Elsewhere the normal tint stays. */
+.glass.is-refracting { background-color: var(--glass-refract); }
+/* Text-heavy glass (menus, popovers, sheets, sidebars) keeps the full tint even
+   while bending: the bend still shows at the rim, and the words stay legible. */
+.glass.glass-text.is-refracting { background-color: var(--glass); }
+.glass-clear.is-refracting { background-color: rgba(255, 255, 255, 0.10); }
+
+/* Clear variant: only over photos or video. Pair with .glass-dim when the
+   media behind it is bright — Apple specifies 35%. */
+.glass-clear {
+  position: relative;
+  isolation: isolate;
+  background-color: rgba(255, 255, 255, 0.18);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+  backdrop-filter: saturate(160%) blur(14px);
+}
+
+.glass-dim {
+  /* a layer over the glass colour and under the labels; ::before stays free
+     for the rim */
+  background-image: linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35));
+}
+
+/* Content dissolves as it passes beneath a bar, instead of colliding with it.
+   Place immediately after the sticky bar. */
+.scroll-edge {
+  position: sticky;
+  top: var(--toolbar-h);
+  z-index: 55;
+  height: 24px;
+  margin-bottom: -24px;
+  pointer-events: none;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  -webkit-mask-image: linear-gradient(to bottom, #000, transparent);
+  mask-image: linear-gradient(to bottom, #000, transparent);
+}
+
+/* Background extension: the content's own image, flipped and blurred, carried
+   under the sidebar so the glass has something of the content to refract.
+   Put this inside the sidebar, behind its children. */
+.bg-extend {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+}
+
+.bg-extend img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  filter: blur(40px) saturate(140%);
+  opacity: 0.5;
+}
+
+/* ============================================================================
+   Components
+   ========================================================================== */
+
+/* Toolbar: one uniform bar, monochromatic, hairline bottom edge. */
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: var(--toolbar-h);
+  padding: 0 16px;
+  border-bottom: 0.5px solid var(--glass-edge);
+}
+
+/* Icon action: a circular chip that fills on hover. */
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--label-2);
+  cursor: pointer;
+  transition: background var(--dur-normal) var(--ease-out),
+              color var(--dur-normal) var(--ease-out),
+              transform var(--dur-fast) var(--ease-out);
+}
+.icon-btn:hover  { background: var(--fill); color: var(--label); }
+.icon-btn:active { transform: scale(0.92); }   /* every control needs a press state */
+
+/* Segmented control: filled track, raised opaque thumb. Five to seven max. */
+.segmented {
+  display: flex;
+  padding: 2px;
+  border-radius: var(--r-ctrl);
+  background: var(--fill);
+}
+.segmented button {
+  padding: 5px 14px;
+  border: 0;
+  border-radius: calc(var(--r-ctrl) - 2px);
+  background: none;
+  font: inherit;
+  font-size: var(--t-footnote);
+  font-weight: 500;
+  color: var(--label-2);
+  cursor: pointer;
+  transition: color var(--dur-normal) var(--ease-out),
+              background var(--dur-normal) var(--ease-spring);
+}
+.segmented button[aria-selected='true'] {
+  background: var(--surface);
+  color: var(--label);
+  font-weight: 600;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+/* Inset grouped list: rounded container, rows inside, separators inset past
+   the leading thumbnail. */
+.list-group {
+  padding: 4px;
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--card-shadow);
+}
+.list-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border-radius: var(--r-row);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.list-row:hover { background: var(--fill-2); }
+.list-row + .list-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 86px;              /* past the 60px thumbnail + gap */
+  right: 12px;
+  height: 0.5px;
+  background: var(--separator);
+}
+.list-row:hover::before,
+.list-row:hover + .list-row::before { background: transparent; }
+
+/* Sidebar row: rounded selection fill, icon + label, no chevron. */
+.side-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 9px;
+  font-size: var(--t-footnote);
+  color: var(--label);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.side-row:hover { background: var(--fill-2); }
+.side-row[aria-current] {
+  background: var(--tint);
+  color: var(--on-tint);
+  font-weight: 600;
+}
+.side-row svg { color: var(--tint); flex: none; }
+.side-row[aria-current] svg { color: currentColor; }
+
+/* Section header: sentence case, weight and colour — not uppercase tracking. */
+.section-title {
+  padding: 0 10px 6px;
+  font-size: var(--t-footnote);
+  font-weight: 600;
+  color: var(--label-2);   /* label-3 is ~2.9:1 on the ground: below 4.5:1 */
+  letter-spacing: 0;
+}
+
+/* Category chip: colour plus a label, never colour alone. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  font-size: var(--t-caption-2);
+  font-weight: 600;
+}
+
+/* Numbers that stack should align. */
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* ============================================================================
+   Accessibility fallbacks — part of the language, not an extra
+   ========================================================================== */
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass-clear {
+    background: var(--glass-thick);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .glass::after { display: none; }
+  .scroll-edge  { display: none; }
+  .glass.is-refracting { background: var(--glass-thick); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
