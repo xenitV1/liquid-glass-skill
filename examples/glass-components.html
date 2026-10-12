@@ -523,6 +523,10 @@
     <p>Each control sits on the kind of content it is meant to float over. The glass is always on the controls,
       never on the content: notes, photos and lists stay solid. Switch the appearance or turn on Reduce
       Transparency in the bar above to see the fallbacks.</p>
+    <a class="live-app" href="https://play.google.com/store/apps/details?id=com.owlapp.spiralens" target="_blank" rel="noopener">
+      <img src="screenshots/spiralens/icon.png" width="36" height="36" alt="">
+      <span><strong>First live example: Spiralens</strong><span>An Android camera app whose glass was built with this skill. Get it on Google Play</span></span>
+    </a>
   </section>
 
   <div class="grid">
@@ -536,9 +540,9 @@
             edge of a lens, while the middle stays clear and easy to read.</p>
           <div class="strip"></div>
         </article>
-        <div class="lens lens--pill glass glass-clear" data-refract tabindex="0" role="img" aria-label="Clear glass capsule, draggable"></div>
-        <div class="lens lens--circle glass glass-clear" data-refract tabindex="0" role="img" aria-label="Clear glass circle, draggable"></div>
-        <div class="lens lens--regular glass" data-refract tabindex="0" role="img" aria-label="Regular glass panel, draggable">Regular</div>
+        <div class="lens lens--pill glass glass-clear" data-refract data-refract-source="#refract-stage" tabindex="0" role="img" aria-label="Clear glass capsule, draggable"></div>
+        <div class="lens lens--circle glass glass-clear" data-refract data-refract-source="#refract-stage" tabindex="0" role="img" aria-label="Clear glass circle, draggable"></div>
+        <div class="lens lens--regular glass" data-refract data-refract-source="#refract-stage" tabindex="0" role="img" aria-label="Regular glass panel, draggable">Regular</div>
       </div>
       <figcaption>
         <h2>Refraction</h2>
@@ -810,14 +814,15 @@
     });
     function note() {
       var lg = window.LiquidGlassRefraction;
-      var text = !lg || !lg.supported()
-        ? 'This browser does not support bending yet (Safari and Firefox), so you see the plain blur glass. Open the page in Chrome or Edge to see it bend.'
-        : document.documentElement.hasAttribute('data-rt')
-          ? 'Reduce Transparency is on, so the glass is solid and nothing bends.'
-          : 'Bending is on in this browser.';
+      var mode = lg && lg.modeOf(document.querySelector('.lens'));
+      var text = mode === 'backdrop'
+        ? 'Bending is on: this browser bends whatever is behind the glass, live.'
+        : mode === 'mirror'
+          ? 'Bending is on in mirror mode: this browser cannot bend the live page, so these three pieces of glass bend a copy of this card. Other glass on the page falls back to blur here.'
+          : 'Reduce Transparency is on, so the glass is solid and nothing bends.';
       document.getElementById('refract-support').textContent = text;
     }
-    window.addEventListener('load', note);
+    window.addEventListener('load', function () { setTimeout(note, 50); });
     document.addEventListener('click', function (e) { if (e.target.closest('[data-toggle-rt]')) note(); });
   })();
 </script>

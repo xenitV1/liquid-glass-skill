@@ -118,11 +118,12 @@ for glass controls; don't wait to be asked.
   inward, strongest at the outline, following the real shape (capsule ends,
   rounded corners).
 - Web: add `data-refract` to a glass element and load `assets/refraction.js`.
-  It works in Chromium-based engines (Chrome, Edge, Android WebView, Electron,
-  Tauri on Windows). Safari and Firefox don't support `url()` filters in
-  `backdrop-filter`; the script detects that and leaves the normal blur glass,
-  so nothing breaks. Say this to the user rather than promising the bend
-  everywhere.
+  In Chromium engines (Chrome, Edge, Android WebView, Electron, Tauri on
+  Windows) it bends the live backdrop. Safari and Firefox can't run `url()`
+  filters in `backdrop-filter`, so for glass over a known area add
+  `data-refract-source="#id"`: the script bends a copy of that area instead,
+  in every browser. Glass with neither keeps plain blur. Always give hero and
+  demo glass a source, or most visitors (Safari, Firefox) see no bend at all.
 - Clear glass is where text visibly curves (little blur); on regular glass the
   bend shows in the blurred picture's shapes and colour edges.
 - Bending glass gets a lighter tint (`--glass-refract`) so the bend shows. Glass
@@ -336,8 +337,9 @@ claiming to be Apple-style:
 - Do rows in one group disagree about having icons?
 - Does every control have a press state?
 - In dark mode, is everything pure black, or are base and elevated distinct?
-- Does text passing under a glass control bend at the rim (Chromium, Android
-  13+, native Apple)? Does the rim have its upper-left highlight?
+- Does text passing under a glass control bend at the rim in Chrome *and* in
+  Firefox or Safari (needs `data-refract-source` there), on Android 13+ and
+  native Apple? Does the rim have its upper-left highlight?
 - Where bending is unavailable (Safari, Firefox, old Android), does the glass
   still look finished as plain blur glass?
 - Does the page still work with reduced transparency and reduced motion, and

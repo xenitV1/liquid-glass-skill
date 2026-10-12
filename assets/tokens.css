@@ -311,6 +311,26 @@ body::before {
 /* Text-heavy glass (menus, popovers, sheets, sidebars) keeps the full tint even
    while bending: the bend still shows at the rim, and the words stay legible. */
 .glass.glass-text.is-refracting { background-color: var(--glass); }
+
+/* Mirror mode (refraction.js in Safari and Firefox): the script puts a bent
+   copy of the source inside the glass and moves the glass fill onto a tint
+   layer above it. Both sit under the labels, the sheen and the rim. */
+.lg-refract-mirror,
+.lg-refract-tint {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.lg-refract-bend { position: absolute; inset: 0; }
+.lg-refract-tint { background-color: var(--glass-refract); }
+.glass-clear > .lg-refract-tint { background-color: rgba(255, 255, 255, 0.10); }
+.glass-text > .lg-refract-tint { background-color: var(--glass); }
+.glass-dim > .lg-refract-tint {
+  background-image: linear-gradient(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.35));
+}
 .glass-clear.is-refracting { background-color: rgba(255, 255, 255, 0.10); }
 
 /* Clear variant: only over photos or video. Pair with .glass-dim when the

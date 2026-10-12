@@ -126,14 +126,29 @@ carries words — menus, popovers, sheets, sidebars — keeps the full tint
 needed a dark veil of about 60%; 32% was unreadable over a bright backdrop.
 
 **Where each platform gets it:** see `references/platforms.md`. On the web,
-`assets/refraction.js` builds the displacement map per element and applies it
-with `backdrop-filter: url(#filter)`. That works in Chromium-based browsers
-only (Chrome, Edge, Android WebView, Electron); Safari and Firefox ignore
-`url()` in `backdrop-filter`, so the script switches itself off there and the
-element keeps its normal blur glass. Verified 2026-10-12: Chromium applies it,
-Firefox reports no support (Playwright test over text). Safari was not tested
-directly; a WebKit bug report from 2026 describes Safari failing to render
-displacement-based glass.
+`assets/refraction.js` builds the displacement map per element and runs it in
+one of two modes:
+
+- *Backdrop mode* (Chromium: Chrome, Edge, Android WebView, Electron):
+  `backdrop-filter: url(#filter)` bends whatever is behind the glass, live,
+  including scrolling content.
+- *Mirror mode* (any browser, used when backdrop mode is unavailable and the
+  element has `data-refract-source="#id"`): the script places a copy of the
+  source inside the glass, keeps it aligned every frame, and bends it with a
+  normal CSS `filter`. Good for glass over a hero, photo or card; it does not
+  pick up content that changes after load unless `refresh()` is called.
+- Neither: plain blur glass, nothing breaks.
+
+Verified 2026-10-12 with Playwright: Chromium runs backdrop mode; Firefox runs
+mirror mode and the result matches Chromium closely, including while dragging
+and after scrolling. WebKit could not be launched on the test machine, so
+Safari is untested; it supports SVG filters on HTML elements, which is all
+mirror mode needs.
+
+Lesson from shipping the demo: a visitor on Firefox first saw clear glass
+lenses as white smudges, because without the bend the clear glass blur (14px)
+erased the text under it. Give demo and hero glass a source so every browser
+gets the bend.
 
 **Accessibility.** Bending is part of the transparency: switch it off under
 Reduce Transparency (the script does) and keep it static — never animate the

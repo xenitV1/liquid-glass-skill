@@ -6,7 +6,7 @@ Glass style on any platform. That means the real look, not the 2020 frosted
 blur: content bends at the glass rim, the rim catches light, and the glass
 stays off your content.
 
-**[Live demo](https://xenitv1.github.io/liquid-glass-skill/)**: drag the glass over the text (Chrome or Edge to see it bend).
+**[Live demo](https://xenitv1.github.io/liquid-glass-skill/)**: drag the glass over the text.
 
 ![Text bending at the edge of a glass capsule](examples/screenshots/refraction.gif)
 
@@ -20,9 +20,9 @@ stays off your content.
   Motion, Reduce Transparency and Increase Contrast fallbacks.
 - **Refraction.** `assets/refraction.js` bends the backdrop along each glass
   element's real outline (capsule, circle, rounded rectangle) using an SVG
-  displacement filter. It runs in Chromium-based browsers (Chrome, Edge,
-  Android WebView, Electron). Safari and Firefox don't support it yet; there
-  the script turns itself off and the glass stays as clean blur.
+  displacement filter. In Chrome, Edge, Android WebView and Electron it bends
+  the live page behind the glass. In Safari and Firefox it bends a copy of a
+  source area you name (`data-refract-source`), so the demo bends there too.
 - **A token file**, `assets/tokens.css`: light and dark palettes, the glass
   material with its uneven rim light, scroll edge effect, and fallbacks for
   reduced transparency and browsers without `backdrop-filter`.
@@ -35,7 +35,7 @@ stays off your content.
 
 ## Examples
 
-Try them in the [live demo](https://xenitv1.github.io/liquid-glass-skill/), or open the files in `examples/` in Chrome or Edge to see the bend. They use only
+Try them in the [live demo](https://xenitv1.github.io/liquid-glass-skill/), or open the files in `examples/`. They use only
 the skill's own files, with no build step.
 
 | | |
@@ -90,6 +90,9 @@ To use the web files without an agent:
 <script src="assets/refraction.js" defer></script>
 
 <nav class="glass" data-refract>…</nav>
+
+<!-- Safari and Firefox: bend a copy of a known area -->
+<div class="glass" data-refract data-refract-source="#hero">…</div>
 ```
 
 ## Layout

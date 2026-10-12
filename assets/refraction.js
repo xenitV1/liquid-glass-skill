@@ -17,16 +17,25 @@
      and rounded rectangles each bend along their own outline. A
      ResizeObserver redraws it when the element changes size.
 
-   Browser support (verified 2026-10-12, see SKILL.md):
-   - Chromium (Chrome, Edge, Opera, Brave, Android WebView): full effect.
-   - Firefox and Safari do not apply url() filters in backdrop-filter. There
-     the module does nothing and the element keeps its normal .glass blur,
-     so it degrades to standard Liquid Glass rather than breaking.
-   - Skipped entirely under prefers-reduced-transparency.
+   Two ways to bend, picked per element:
+   1. Backdrop mode (Chromium: Chrome, Edge, Opera, Brave, Android WebView,
+      Electron). The filter runs as a backdrop-filter, so it bends whatever is
+      behind the element, live, including scrolling content.
+   2. Mirror mode (every browser, including Safari and Firefox), for elements
+      with data-refract-source="#id". Safari and Firefox don't run url()
+      filters in backdrop-filter, so the script copies the source element
+      into the glass, keeps the copy lined up with the original every frame,
+      and bends the copy with an ordinary CSS filter. Use it for glass over a
+      known, mostly static area (a hero, a photo, a card of text). The copy
+      is a snapshot of the source's markup: text typed into it later is not
+      mirrored until refresh().
+   Elements with neither keep the normal .glass blur, so nothing breaks.
+   Everything is skipped under prefers-reduced-transparency.
 
    Usage
      <script src="assets/refraction.js" defer></script>
      <nav class="glass" data-refract>…</nav>
+     <div class="glass" data-refract data-refract-source="#hero">…</div>
 
    Options, as attributes on the element (all optional):
      data-refract="0.9"        strength, 0–2 (default 1)
@@ -57,11 +66,22 @@
     return /Chrome\/\d+/.test(ua) && !/Firefox|FxiOS|EdgiOS|CriOS/.test(ua);
   }
 
+  function reducedTransparency() {
+    return window.matchMedia('(prefers-reduced-transparency: reduce)').matches ||
+      document.documentElement.hasAttribute('data-rt');
+  }
+
+  /* Backdrop mode: Chromium only. */
   function supported() {
     if (!isChromium()) return false;
     if (!window.CSS || !CSS.supports('backdrop-filter', 'url(#a)')) return false;
-    if (window.matchMedia('(prefers-reduced-transparency: reduce)').matches) return false;
-    return true;
+    return !window.matchMedia('(prefers-reduced-transparency: reduce)').matches;
+  }
+
+  function sourceOf(el) {
+    var sel = el.getAttribute('data-refract-source');
+    if (!sel) return null;
+    try { return document.querySelector(sel); } catch (e) { return null; }
   }
 
   function ensureDefs() {
@@ -140,7 +160,7 @@
     return isFinite(v) ? v : fallback;
   }
 
-  function apply(el) {
+  function apply(el, mode) {
     var rect = el.getBoundingClientRect();
     var w = Math.round(rect.width), h = Math.round(rect.height);
     if (w < 8 || h < 8) return;
@@ -162,9 +182,10 @@
     var magnify = readNumber(el, 'data-refract-magnify', 0);
     var scale = Math.round(bezel * 1.2 * strength);   // max shift = scale / 2
 
-    var key = [w, h, radius, bezel, scale, blur, magnify, dispersion].join('|');
+    var key = [mode, w, h, radius, bezel, scale, blur, magnify, dispersion].join('|');
     var state = observed.get(el);
     if (state && state.key === key) return;
+    if (state && state.mode !== mode) { remove(el); state = null; }
 
     var id = state ? state.id : 'lg-refract-' + (++count);
     var old = document.getElementById(id);
@@ -222,10 +243,95 @@
     ensureDefs().appendChild(filter);
 
     var value = 'url(#' + id + ') blur(' + blur + 'px) saturate(170%)';
-    el.style.setProperty('backdrop-filter', value);
-    el.style.setProperty('-webkit-backdrop-filter', value);
+    var next = { key: key, id: id, mode: mode };
+    if (mode === 'backdrop') {
+      el.style.setProperty('backdrop-filter', value);
+      el.style.setProperty('-webkit-backdrop-filter', value);
+    } else {
+      next.mirror = state && state.mirror ? state.mirror : buildMirror(el);
+      next.mirror.bend.style.filter = value;
+    }
     el.classList.add('is-refracting');
-    observed.set(el, { key: key, id: id });
+    observed.set(el, next);
+    if (mode === 'mirror') { mirrors.add(el); startSync(); }
+  }
+
+  /* ---- mirror mode -------------------------------------------------------- */
+
+  var mirrors = new Set();
+  var syncing = false;
+
+  function buildMirror(el) {
+    var src = sourceOf(el);
+    // Outer layer clips to the glass outline; the inner one carries the
+    // filter. (A filter on the clipping layer itself would paint the bent
+    // pixels back into the rounded corners.)
+    var box = document.createElement('div');
+    box.className = 'lg-refract-mirror';
+    box.setAttribute('aria-hidden', 'true');
+    var bend = document.createElement('div');
+    bend.className = 'lg-refract-bend';
+    box.appendChild(bend);
+    var copy = src.cloneNode(true);
+    // No duplicate ids, no nested glass, nothing focusable in the copy.
+    copy.removeAttribute('id');
+    copy.querySelectorAll('[id]').forEach(function (n) { n.removeAttribute('id'); });
+    copy.querySelectorAll('[data-refract]').forEach(function (n) { n.remove(); });
+    copy.querySelectorAll('a, button, input, select, textarea, [tabindex]').forEach(function (n) {
+      n.setAttribute('tabindex', '-1');
+    });
+    copy.setAttribute('inert', '');
+    var cs = getComputedStyle(src);
+    copy.style.position = 'absolute';
+    copy.style.margin = '0';
+    copy.style.boxSizing = 'border-box';
+    copy.style.color = cs.color;
+    copy.style.font = cs.font;
+    bend.appendChild(copy);
+    var tint = document.createElement('div');
+    tint.className = 'lg-refract-tint';
+    tint.setAttribute('aria-hidden', 'true');
+    el.insertBefore(tint, el.firstChild);
+    el.insertBefore(box, el.firstChild);
+    // The glass's own fill and blur move to the tint layer above the copy.
+    el.style.setProperty('background-color', 'transparent');
+    el.style.setProperty('background-image', 'none');
+    el.style.setProperty('backdrop-filter', 'none');
+    el.style.setProperty('-webkit-backdrop-filter', 'none');
+    var m = { box: box, bend: bend, copy: copy, tint: tint, src: src, x: NaN, y: NaN, w: NaN, h: NaN };
+    syncMirror(el, m);
+    return m;
+  }
+
+  function syncMirror(el, m) {
+    var a = el.getBoundingClientRect();
+    var b = m.src.getBoundingClientRect();
+    var cl = el.clientLeft, ct = el.clientTop;
+    var x = b.left - a.left - cl, y = b.top - a.top - ct;
+    if (x !== m.x || y !== m.y) {
+      m.copy.style.transform = 'translate(' + x + 'px,' + y + 'px)';
+      m.x = x; m.y = y;
+    }
+    if (b.width !== m.w || b.height !== m.h) {
+      m.copy.style.left = '0';
+      m.copy.style.top = '0';
+      m.copy.style.width = b.width + 'px';
+      m.copy.style.height = b.height + 'px';
+      m.w = b.width; m.h = b.height;
+    }
+  }
+
+  function startSync() {
+    if (syncing) return;
+    syncing = true;
+    (function frame() {
+      if (!mirrors.size) { syncing = false; return; }
+      mirrors.forEach(function (el) {
+        var st = observed.get(el);
+        if (st && st.mirror) syncMirror(el, st.mirror);
+      });
+      requestAnimationFrame(frame);
+    })();
   }
 
   function remove(el) {
@@ -233,32 +339,56 @@
     if (!state) return;
     var f = document.getElementById(state.id);
     if (f) f.remove();
+    if (state.mirror) {
+      state.mirror.box.remove();
+      state.mirror.tint.remove();
+      el.style.removeProperty('background-color');
+      el.style.removeProperty('background-image');
+      mirrors.delete(el);
+    }
     el.style.removeProperty('backdrop-filter');
     el.style.removeProperty('-webkit-backdrop-filter');
     el.classList.remove('is-refracting');
     observed.delete(el);
   }
 
+  function modeFor(el) {
+    if (reducedTransparency()) return null;
+    if (supported()) return 'backdrop';
+    if (sourceOf(el)) return 'mirror';
+    return null;
+  }
+
   var ro = typeof ResizeObserver === 'function'
-    ? new ResizeObserver(function (entries) { entries.forEach(function (e) { apply(e.target); }); })
+    ? new ResizeObserver(function (entries) {
+        entries.forEach(function (e) { var m = modeFor(e.target); if (m) apply(e.target, m); });
+      })
     : null;
 
   function refresh() {
     var els = document.querySelectorAll('[data-refract]');
-    var on = supported() && !document.documentElement.hasAttribute('data-rt');
+    var any = false;
     els.forEach(function (el) {
-      if (on) {
-        apply(el);
+      var mode = modeFor(el);
+      if (mode) {
+        apply(el, mode);
+        any = true;
         if (ro) ro.observe(el);
       } else {
         remove(el);
         if (ro) ro.unobserve(el);
       }
     });
-    document.documentElement.classList.toggle('refraction-on', on && els.length > 0);
+    document.documentElement.classList.toggle('refraction-on', any);
   }
 
-  window.LiquidGlassRefraction = { refresh: refresh, supported: supported };
+  /* Which mode an element is using right now: 'backdrop', 'mirror' or null. */
+  function modeOf(el) {
+    var st = observed.get(el);
+    return st ? st.mode : null;
+  }
+
+  window.LiquidGlassRefraction = { refresh: refresh, supported: supported, modeOf: modeOf };
 
   function start() {
     refresh();

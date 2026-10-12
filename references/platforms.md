@@ -26,7 +26,7 @@ Contents: [Choosing a route](#choosing-a-route) · [Apple native](#apple-native-
 | iOS / iPadOS / macOS 26+ | system | system | Use the real material: SwiftUI `glassEffect`, UIKit `UIGlassEffect`. Never fake it there. |
 | Android 12+ (Compose) | Haze | Haze `haze-glass`, needs Android 13+ | Spiralens recipe below |
 | Web, Chromium (Chrome, Edge, Android WebView, Electron, Tauri on Windows) | `backdrop-filter` | `assets/refraction.js` | `assets/tokens.css` + `refraction.js` |
-| Web, Safari / Firefox | `backdrop-filter` | not available | Same files; refraction switches itself off, blur glass stays |
+| Web, Safari / Firefox | `backdrop-filter` | mirror mode (`data-refract-source`) | Same files; glass with a source bends a copy of it, other glass stays blur |
 | Flutter | `BackdropFilter` | `ImageFilter.shader`, Impeller only | shader route below |
 | Linux desktop apps | in-app only | in-app only | draw the glass inside the app (web view or GPU shader) |
 
@@ -180,10 +180,10 @@ Source: electronjs.org/docs/latest/api/browser-window.
 
 The web view differs by OS, and that decides refraction:
 - Windows: WebView2 (Chromium) — refraction works.
-- macOS: WKWebView (Safari engine) — blur only. Prefer the
-  `window-vibrancy` crate's `apply_liquid_glass` (macOS 26+) for the window,
-  and keep in-page glass blur-only.
-- Linux: WebKitGTK — blur only; treat refraction as off.
+- macOS: WKWebView (Safari engine) — live backdrop bend unavailable; use
+  mirror mode (`data-refract-source`) for glass over known areas. Prefer the
+  `window-vibrancy` crate's `apply_liquid_glass` (macOS 26+) for the window.
+- Linux: WebKitGTK — same as macOS: mirror mode or blur.
 
 The `window-vibrancy` crate (github.com/tauri-apps/window-vibrancy) also offers
 `apply_mica` (Windows 11), `apply_acrylic` (Windows 10/11) and `apply_vibrancy`

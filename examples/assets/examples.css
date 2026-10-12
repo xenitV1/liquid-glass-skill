@@ -157,3 +157,23 @@
   .segmented button { padding: 5px 10px; }
 }
 
+
+/* --- link to the first app that ships this glass ------------------------- */
+.live-app {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  padding: 8px 16px 8px 8px;
+  border-radius: var(--r-card);
+  background: var(--surface);
+  box-shadow: var(--card-shadow);
+  color: var(--label);
+  text-decoration: none;
+  transition: box-shadow var(--dur-normal) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+.live-app:hover { box-shadow: var(--card-shadow-h); }
+.live-app:active { transform: scale(0.98); }
+.live-app img { border-radius: 9px; flex: none; }
+.live-app strong { display: block; font-size: var(--t-subhead); font-weight: 600; }
+.live-app > span > span { display: block; font-size: var(--t-footnote); color: var(--label-2); }
